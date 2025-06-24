@@ -120,3 +120,204 @@
     @apply bg-background text-foreground;
   }
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Film noir color palette */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Primary gold accent for clues and important elements */
+    --primary: 47.9 95.8% 53.1%;
+    --primary-foreground: 26 83.3% 14.1%;
+    
+    /* Secondary blue-grays for interface elements */
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 40% 98%;
+    
+    /* Muted backgrounds for subtle elements */
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    
+    /* Accent colors for interactive elements */
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* Destructive/danger colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Border colors */
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 47.9 95.8% 53.1%;
+    
+    /* Chart colors for data visualization */
+    --chart-1: 47.9 95.8% 53.1%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Ensure dark theme consistency */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 47.9 95.8% 53.1%;
+    --primary-foreground: 26 83.3% 14.1%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 47.9 95.8% 53.1%;
+    --chart-1: 47.9 95.8% 53.1%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), sans-serif;
+  }
+
+  /* Typography scale for murder mystery theme */
+  .font-mono {
+    font-family: var(--font-jetbrains-mono), monospace;
+  }
+
+  /* Custom classes for film noir atmosphere */
+  .noir-shadow {
+    box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .evidence-text {
+    @apply font-mono text-sm text-amber-200 bg-slate-800/50 px-2 py-1 rounded border border-amber-500/20;
+  }
+
+  .clue-reveal {
+    @apply bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/30 rounded-lg p-4;
+    animation: clue-glow 2s ease-in-out infinite alternate;
+  }
+
+  .suspect-card {
+    @apply bg-slate-800/60 border border-slate-700 rounded-lg p-4 transition-all duration-300;
+    backdrop-filter: blur(8px);
+  }
+
+  .suspect-card:hover {
+    @apply border-amber-500/50 bg-slate-800/80;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+  }
+
+  .puzzle-container {
+    @apply bg-slate-800/40 border border-slate-600 rounded-xl p-6;
+    backdrop-filter: blur(12px);
+  }
+
+  .step-indicator {
+    @apply flex items-center justify-center w-8 h-8 rounded-full border-2 text-sm font-medium transition-all duration-200;
+  }
+
+  .step-indicator.active {
+    @apply bg-amber-500 border-amber-500 text-slate-900;
+  }
+
+  .step-indicator.completed {
+    @apply bg-green-600 border-green-600 text-white;
+  }
+
+  .step-indicator.inactive {
+    @apply bg-slate-700 border-slate-600 text-slate-400;
+  }
+
+  /* Animations */
+  @keyframes clue-glow {
+    from {
+      box-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
+    }
+    to {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+    }
+  }
+
+  @keyframes evidence-scan {
+    0% {
+      background-position: -200px 0;
+    }
+    100% {
+      background-position: calc(200px + 100%) 0;
+    }
+  }
+
+  .evidence-scanning {
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.2), transparent);
+    background-size: 200px 100%;
+    animation: evidence-scan 2s infinite;
+  }
+
+  /* Interactive elements */
+  .interactive-hotspot {
+    @apply absolute w-4 h-4 bg-amber-500 rounded-full animate-pulse cursor-pointer;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+  }
+
+  .interactive-hotspot:hover {
+    @apply bg-amber-400 scale-125;
+  }
+
+  /* Accessibility enhancements */
+  .high-contrast {
+    @apply contrast-125 brightness-110;
+  }
+
+  /* Focus styles for accessibility */
+  *:focus {
+    @apply outline-none ring-2 ring-amber-500 ring-offset-2 ring-offset-slate-900;
+  }
+
+  /* Custom scrollbar for noir theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-600 rounded-lg;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500;
+  }
+}

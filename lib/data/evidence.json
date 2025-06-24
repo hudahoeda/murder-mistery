@@ -1,0 +1,148 @@
+{
+  "evidence": [
+    {
+      "id": "bloodstained-wrench",
+      "name": "Bloodstained Tekiro Wrench",
+      "description": "A 12-inch Tekiro adjustable wrench with blue handle, discovered hidden in Depot A maintenance area. Shows clear bloodstains on the metal head and partial fingerprints on the handle.",
+      "location": "Depot A - Morning Shift Area (hidden behind equipment locker)",
+      "discoveredBy": "Investigation team following riddle solution",
+      "category": "physical",
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security", "agus-maintenance"],
+      "imageUrl": "/images/evidence/bloodstained-wrench.png",
+      "analysisResults": "Blood type matches victim. Fingerprints partially smudged but show traces consistent with work gloves. Tool serial number matches maintenance department inventory."
+    },
+    {
+      "id": "luggage-tag-cipher",
+      "name": "Torn Luggage Tag with Cipher",
+      "description": "Fragments of a luggage tag (LUG-457) found near the crime scene, containing a Caesar cipher message. When reconstructed, reveals coded meeting arrangement.",
+      "location": "Platform 2 vicinity, scattered pieces",
+      "discoveredBy": "Station cleaning crew",
+      "category": "document",
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "imageUrl": "/images/evidence/luggage-tag-fragments.png",
+      "analysisResults": "Caesar cipher with shift of 7. Decoded message: 'MEET AT STORE ROOM'. Handwriting analysis pending."
+    },
+    {
+      "id": "cctv-footage-platform-2",
+      "name": "CCTV Footage - Platform 2",
+      "description": "Security camera footage from Platform 2 showing victim's final movements at 19:45-19:55. Shows Pak Budi appearing agitated and checking his watch repeatedly.",
+      "location": "Platform 2 Security Camera 5",
+      "discoveredBy": "Security review",
+      "category": "digital",
+      "importance": "important",
+      "relatedSuspects": ["rahman-security"],
+      "imageUrl": "/images/evidence/cctv-platform2-timestamp.png",
+      "analysisResults": "Victim visible at 19:47, 19:52. Shows frustrated body language. No clear view of interactions with other individuals."
+    },
+    {
+      "id": "cctv-enhanced-footage",
+      "name": "Enhanced CCTV - Storage Area",
+      "description": "Digitally enhanced footage from Camera 7 showing a figure carrying a wrench-like object near the storage area at approximately 20:10.",
+      "location": "Storage Area Security Camera 7",
+      "discoveredBy": "Digital forensics team",
+      "category": "digital",
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "imageUrl": "/images/evidence/cctv-enhanced-wrench.png",
+      "analysisResults": "Image enhancement reveals blue-handled tool consistent with Tekiro wrench. Figure height and build matches several suspects."
+    },
+    {
+      "id": "keycard-access-log",
+      "name": "Security Keycard Access Log",
+      "description": "Digital log showing Rahman Pratama's keycard accessing storage room at 20:18, contradicting his stated alibi of being near information desk.",
+      "location": "Security system database",
+      "discoveredBy": "IT security audit",
+      "category": "digital",
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "imageUrl": "/images/evidence/keycard-log-screen.png",
+      "analysisResults": "Timestamp: 20:18:34. Card ID: RS-001 (Rahman Pratama). Access granted to Storage Room B-7."
+    },
+    {
+      "id": "train-schedule-board",
+      "name": "Electronic Schedule Display",
+      "description": "Digital record of train schedule showing the 10-minute delay of the 19:45 Bekasi service, creating unusual passenger flow patterns.",
+      "location": "Platform Information System",
+      "discoveredBy": "Station operations review",
+      "category": "digital",
+      "importance": "important",
+      "relatedSuspects": ["sari-station-master", "rahman-security"],
+      "imageUrl": "/images/evidence/schedule-delay-display.png",
+      "analysisResults": "Delay logged at 19:42. Caused by 'signal maintenance' - no maintenance was actually scheduled."
+    },
+    {
+      "id": "financial-records",
+      "name": "Security Budget Discrepancies",
+      "description": "Financial documents showing irregularities in security improvement fund allocation, with several thousand dollars unaccounted for over the past six months.",
+      "location": "Administrative office files",
+      "discoveredBy": "Internal audit",
+      "category": "document",
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "imageUrl": "/images/evidence/financial-discrepancy-report.png",
+      "analysisResults": "Total discrepancy: Rp 45,000,000. Pak Budi's signature on all authorization forms. Pattern suggests systematic embezzlement."
+    },
+    {
+      "id": "witness-statement-maya",
+      "name": "Maya's Witness Statement",
+      "description": "Written testimony from Maya Kusuma (ticket clerk) stating she saw Rahman talking to someone near the storage area around 20:15, contradicting his official statement.",
+      "location": "Witness interview room",
+      "discoveredBy": "Detective interview",
+      "category": "witness",
+      "importance": "important",
+      "relatedSuspects": ["rahman-security"],
+      "imageUrl": "/images/evidence/maya-witness-statement.png",
+      "analysisResults": "Handwritten statement, signed and dated. Maya appeared nervous but consistent in her account. No obvious motive to lie."
+    },
+    {
+      "id": "maintenance-tool-inventory",
+      "name": "Maintenance Department Tool Inventory",
+      "description": "Official record of all tools issued to maintenance staff, including Tekiro wrench set issued to Agus Santoso in January 2024.",
+      "location": "Maintenance office records",
+      "discoveredBy": "Equipment audit",
+      "category": "document",
+      "importance": "important",
+      "relatedSuspects": ["agus-maintenance"],
+      "imageUrl": "/images/evidence/tool-inventory-list.png",
+      "analysisResults": "Tekiro 12-inch adjustable wrench, Serial #TK-2024-157, issued to Agus Santoso. Last inventory check: November 2024 - all tools accounted for."
+    },
+    {
+      "id": "passenger-flow-data",
+      "name": "Platform 2 Passenger Traffic Analysis",
+      "description": "Automated passenger counting data showing dramatic 88% reduction in Platform 2 traffic between 19:45 and 20:15, correlating with the train delay and murder timeframe.",
+      "location": "Station analytics system",
+      "discoveredBy": "Data analysis team",
+      "category": "digital",
+      "importance": "important",
+      "relatedSuspects": ["sari-station-master"],
+      "imageUrl": "/images/evidence/passenger-flow-chart.png",
+      "analysisResults": "Statistically significant anomaly. Normal Platform 2 traffic: 40-70 passengers per 15-minute period. During incident: only 8 passengers."
+    },
+    {
+      "id": "depot-access-logs",
+      "name": "Depot A Access History",
+      "description": "Security logs showing who had access to Depot A where the murder weapon was hidden. Limited to authorized maintenance and security personnel.",
+      "location": "Security database",
+      "discoveredBy": "Digital forensics",
+      "category": "digital",
+      "importance": "important",
+      "relatedSuspects": ["agus-maintenance", "rahman-security"],
+      "imageUrl": "/images/evidence/depot-access-history.png",
+      "analysisResults": "Last 30 days: Agus Santoso (daily), Rahman Pratama (weekly security checks), Sari Indraswari (monthly inspections). No unauthorized access detected."
+    },
+    {
+      "id": "victim-personal-phone",
+      "name": "Pak Budi's Mobile Phone",
+      "description": "Victim's smartphone found on his person, showing recent text messages and call logs that may reveal his state of mind and recent communications.",
+      "location": "Found on victim",
+      "discoveredBy": "Crime scene team",
+      "category": "digital",
+      "importance": "important",
+      "relatedSuspects": ["rahman-security"],
+      "imageUrl": "/images/evidence/victim-phone-messages.png",
+      "analysisResults": "Last message sent at 20:12: 'Meet me at the usual place. We need to discuss your findings.' Sent to Rahman Pratama's number."
+    }
+  ]
+} 

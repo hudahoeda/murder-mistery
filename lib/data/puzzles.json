@@ -1,0 +1,525 @@
+{
+  "puzzles": [
+    {
+      "id": "train-schedule-investigation",
+      "title": "Train Schedule Investigation",
+      "description": "Analyze train schedules and passenger manifests to uncover suspicious timing patterns around the murder.",
+      "category": "investigation",
+      "totalTimeEstimate": 15,
+      "difficulty": 3,
+      "cluesRevealed": ["victim-last-movement", "suspicious-timing"],
+      "steps": [
+        {
+          "id": "platform-identification",
+          "title": "Platform Identification",
+          "description": "Examine platform signage photos to identify where the victim was last seen boarding area.",
+          "type": "multiple-choice",
+          "timeEstimate": 5,
+          "content": {
+            "question": "Based on the CCTV footage timestamp 19:45, which platform was the victim approaching?",
+            "images": [
+              "/images/evidence/platform-1-sign.jpg",
+              "/images/evidence/platform-2-sign.jpg", 
+              "/images/evidence/platform-3-sign.jpg"
+            ],
+            "options": [
+              { "id": "platform-1", "text": "Platform 1 - Bogor Line", "correct": false },
+              { "id": "platform-2", "text": "Platform 2 - Bekasi Line", "correct": true },
+              { "id": "platform-3", "text": "Platform 3 - Serpong Line", "correct": false },
+              { "id": "platform-4", "text": "Platform 4 - Tanah Abang Line", "correct": false }
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "platform-2"
+          },
+          "hintText": "Look carefully at the electronic departure board visible in the background of the footage."
+        },
+        {
+          "id": "schedule-analysis",
+          "title": "Schedule Analysis", 
+          "description": "Cross-reference train departure times with witness statements to find scheduling inconsistencies.",
+          "type": "calculation",
+          "timeEstimate": 7,
+          "content": {
+            "schedule": [
+              { "time": "19:30", "destination": "Bogor", "platform": 1, "status": "On Time" },
+              { "time": "19:45", "destination": "Bekasi", "platform": 2, "status": "Delayed 10 min" },
+              { "time": "19:50", "destination": "Serpong", "platform": 3, "status": "On Time" },
+              { "time": "20:00", "destination": "Tanah Abang", "platform": 4, "status": "Cancelled" }
+            ],
+            "question": "If the victim was seen at Platform 2 at 19:45, but the Bekasi train was delayed, how many minutes would he have waited before the actual departure?",
+            "witnessStatement": "Pak Rahman saw the victim looking frustrated and checking his watch repeatedly."
+          },
+          "validation": {
+            "type": "numeric",
+            "value": 10
+          },
+          "hintText": "Check the status column for delay information."
+        },
+        {
+          "id": "passenger-manifest",
+          "title": "Passenger Manifest Cross-Reference",
+          "description": "Search passenger booking records to identify who was traveling on the same route as the victim.",
+          "type": "text-input",
+          "timeEstimate": 3,
+          "content": {
+            "database": [
+              { "name": "Rahman Pratama", "destination": "Bekasi", "bookingRef": "BK19453", "time": "19:55" },
+              { "name": "Maya Kusuma", "destination": "Bogor", "bookingRef": "BG19201", "time": "19:30" },
+              { "name": "Budi Hermawan", "destination": "Bekasi", "bookingRef": "BK19454", "time": "19:55" },
+              { "name": "Agus Santoso", "destination": "Serpong", "bookingRef": "SP19385", "time": "19:50" }
+            ],
+            "question": "Who else was booked on the same 19:55 Bekasi train as the victim (Budi Hermawan)?"
+          },
+          "validation": {
+            "type": "contains",
+            "value": "Rahman Pratama",
+            "caseSensitive": false
+          },
+          "hintText": "Look for matching destination and time in the booking records."
+        }
+      ]
+    },
+    {
+      "id": "lost-luggage-cipher",
+      "title": "Lost Luggage Cipher",
+      "description": "Reconstruct torn luggage tags and decode hidden messages to uncover secret communications.",
+      "category": "cipher",
+      "totalTimeEstimate": 18,
+      "difficulty": 4,
+      "cluesRevealed": ["secret-meeting", "coded-threat"],
+      "steps": [
+        {
+          "id": "luggage-tag-assembly",
+          "title": "Luggage Tag Recovery",
+          "description": "Drag and drop torn pieces to reconstruct the damaged luggage tag found near the scene.",
+          "type": "drag-drop",
+          "timeEstimate": 6,
+          "content": {
+            "pieces": [
+              { "id": "piece-1", "content": "LUG", "position": { "x": 0, "y": 0 }, "targetPosition": { "x": 0, "y": 0 } },
+              { "id": "piece-2", "content": "GE-", "position": { "x": 100, "y": 50 }, "targetPosition": { "x": 30, "y": 0 } },
+              { "id": "piece-3", "content": "457", "position": { "x": 200, "y": 100 }, "targetPosition": { "x": 60, "y": 0 } },
+              { "id": "piece-4", "content": "BEK", "position": { "x": 50, "y": 150 }, "targetPosition": { "x": 0, "y": 30 } },
+              { "id": "piece-5", "content": "ASI", "position": { "x": 150, "y": 200 }, "targetPosition": { "x": 30, "y": 30 } }
+            ],
+            "targetImage": "/images/evidence/luggage-tag-template.png",
+            "tolerance": 15
+          },
+          "validation": {
+            "type": "custom",
+            "value": "all_pieces_placed_correctly"
+          },
+          "hintText": "Look for edges that match and letters that form readable text."
+        },
+        {
+          "id": "caesar-cipher-decoding",
+          "title": "Caesar Cipher Decoding",
+          "description": "Use the cipher wheel to decode the secret message found on the reconstructed tag.",
+          "type": "cipher",
+          "timeEstimate": 8,
+          "content": {
+            "encryptedText": "PHHW DW VWRUH URRP",
+            "cipherType": "caesar",
+            "alphabetSize": 26,
+            "hint": "The shift value is the same as the luggage number's last digit"
+          },
+          "validation": {
+            "type": "exact",
+            "value": "MEET AT STORE ROOM",
+            "caseSensitive": false
+          },
+          "hintText": "Remember the luggage number from the previous step: 457. What's the last digit?"
+        },
+        {
+          "id": "evidence-locker-access",
+          "title": "Evidence Locker Access",
+          "description": "Use the decoded message and other clues to determine the storage room access code.",
+          "type": "text-input",
+          "timeEstimate": 4,
+          "content": {
+            "question": "The decoded message mentions a 'store room'. Based on the station map and the time 20:15 referenced in other evidence, what would be the 4-digit access code?",
+            "context": "Storage rooms use a time-based code system: HHMM format from the arranged meeting time.",
+            "additionalClues": [
+              "The meeting was arranged for quarter past eight in the evening",
+              "Military time format is used for all station security systems"
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "2015"
+          },
+          "hintText": "Quarter past eight in the evening in 24-hour format would be..."
+        }
+      ]
+    },
+    {
+      "id": "station-environment-riddle",
+      "title": "Station Environment Riddle",
+      "description": "Solve location-based riddles and explore the station layout to discover hidden evidence.",
+      "category": "riddle",
+      "totalTimeEstimate": 20,
+      "difficulty": 3,
+      "cluesRevealed": ["hidden-evidence", "secret-location"],
+      "steps": [
+        {
+          "id": "location-riddle",
+          "title": "The Riddle",
+          "description": "Solve this riddle to identify the specific location where crucial evidence is hidden.",
+          "type": "multiple-choice",
+          "timeEstimate": 8,
+          "content": {
+            "riddle": "Where trains rest but never sleep,\nWhere metal giants quietly keep,\nTheir secrets locked in numbered bays,\nAway from passengers' hurried ways.\nBetween the platforms, out of sight,\nWhere morning comes before the night.",
+            "question": "Which station area does this riddle describe?",
+            "options": [
+              { "id": "passenger-waiting", "text": "Passenger Waiting Area", "correct": false },
+              { "id": "train-depot", "text": "Train Maintenance Depot", "correct": true },
+              { "id": "ticket-office", "text": "Ticket Office", "correct": false },
+              { "id": "food-court", "text": "Food Court", "correct": false }
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "train-depot"
+          },
+          "hintText": "Think about where trains go when they're not actively carrying passengers. The last line is a clue about shift schedules."
+        },
+        {
+          "id": "platform-identification-map",
+          "title": "Platform Identification",
+          "description": "Use the interactive station map to locate the specific depot area mentioned in the riddle.",
+          "type": "multiple-choice",
+          "timeEstimate": 7,
+          "content": {
+            "mapImage": "/images/station/manggarai-station-map.svg",
+            "interactiveAreas": [
+              { "id": "depot-a", "coordinates": [100, 150], "label": "Depot A - Morning Shift" },
+              { "id": "depot-b", "coordinates": [200, 150], "label": "Depot B - Evening Shift" },
+              { "id": "depot-c", "coordinates": [300, 150], "label": "Depot C - Night Shift" },
+              { "id": "depot-d", "coordinates": [400, 150], "label": "Depot D - Maintenance Only" }
+            ],
+            "question": "Based on the riddle's last line 'Where morning comes before the night', which depot should you investigate?",
+            "options": [
+              { "id": "depot-a", "text": "Depot A - Morning Shift", "correct": true },
+              { "id": "depot-b", "text": "Depot B - Evening Shift", "correct": false },
+              { "id": "depot-c", "text": "Depot C - Night Shift", "correct": false },
+              { "id": "depot-d", "text": "Depot D - Maintenance Only", "correct": false }
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "depot-a"
+          },
+          "hintText": "The riddle mentions morning coming before night - think about shift schedules."
+        },
+        {
+          "id": "evidence-discovery-360",
+          "title": "Evidence Discovery",
+          "description": "Explore the 360° view of Depot A to find and identify the hidden evidence.",
+          "type": "image-analysis",
+          "timeEstimate": 5,
+          "content": {
+            "panoramicImage": "/images/360/depot-a-panoramic.jpg",
+            "hotspots": [
+              { "id": "toolbox", "coordinates": [45, 60], "evidence": false },
+              { "id": "workbench", "coordinates": [120, 45], "evidence": false },
+              { "id": "hidden-locker", "coordinates": [300, 70], "evidence": true, "item": "bloodstained-wrench" },
+              { "id": "oil-drums", "coordinates": [200, 80], "evidence": false }
+            ],
+            "question": "What evidence item can you find hidden in this depot?",
+            "options": [
+              { "id": "bloody-knife", "text": "A bloodstained knife", "correct": false },
+              { "id": "bloodstained-wrench", "text": "A bloodstained wrench", "correct": true },
+              { "id": "torn-clothing", "text": "Torn clothing", "correct": false },
+              { "id": "fingerprints", "text": "Clear fingerprints", "correct": false }
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "bloodstained-wrench"
+          },
+          "hintText": "Look for objects that seem out of place or partially hidden. Click on suspicious areas in the 360° view."
+        }
+      ]
+    },
+    {
+      "id": "witness-statement-analysis",
+      "title": "Witness Statement Analysis",
+      "description": "Examine conflicting witness testimonies and build an accurate timeline of events.",
+      "category": "analysis",
+      "totalTimeEstimate": 22,
+      "difficulty": 4,
+      "cluesRevealed": ["alibi-contradiction", "timeline-gap"],
+      "steps": [
+        {
+          "id": "statement-extraction",
+          "title": "Initial Statement",
+          "description": "Highlight key information in Rahman's witness statement and extract timeline details.",
+          "type": "text-input",
+          "timeEstimate": 8,
+          "content": {
+            "statement": "I was doing my regular security patrol around the station from 7:15 PM onwards. I remember seeing Pak Budi near the ticket counters around 7:50 PM - he seemed to be in a hurry. I continued my rounds, checking the upper level offices around 8:00 PM. I didn't see anything unusual until we found the body at 8:45 PM. I was near the information desk when Agus came running to report the discovery.",
+            "questions": [
+              "What time did Rahman start his patrol?",
+              "Where did Rahman see the victim?",
+              "What time did Rahman check the upper level offices?",
+              "Where was Rahman when the body was discovered?"
+            ]
+          },
+          "validation": {
+            "type": "contains",
+            "value": ["7:15", "ticket counters", "8:00", "information desk"],
+            "allowPartial": true
+          },
+          "hintText": "Look for specific times, locations, and actions mentioned in the statement."
+        },
+        {
+          "id": "alibi-verification",
+          "title": "Alibi Verification",
+          "description": "Compare Rahman's statement with CCTV footage timestamps and other witness accounts.",
+          "type": "multiple-choice",
+          "timeEstimate": 9,
+          "content": {
+            "evidence": [
+              {
+                "type": "cctv",
+                "description": "CCTV Camera 3 (Upper Level): Shows Rahman entering administrative area at 8:05 PM, exiting at 8:25 PM"
+              },
+              {
+                "type": "witness",
+                "description": "Maya (Ticket Clerk): 'I saw Rahman talking to someone near the storage area around 8:15 PM, but couldn't see who it was.'"
+              },
+              {
+                "type": "evidence",
+                "description": "Security log: Rahman's keycard accessed storage room at 8:18 PM"
+              }
+            ],
+            "question": "What contradiction exists between Rahman's statement and the evidence?",
+            "options": [
+              { "id": "time-mismatch", "text": "He claims to have checked offices at 8:00 PM, but CCTV shows 8:05 PM", "correct": false },
+              { "id": "location-lie", "text": "He claims he was near information desk during discovery, but evidence shows he was at storage area", "correct": true },
+              { "id": "no-contradiction", "text": "No significant contradictions found", "correct": false },
+              { "id": "witness-unreliable", "text": "Maya's testimony is unreliable due to distance", "correct": false }
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "location-lie"
+          },
+          "hintText": "Compare Rahman's claimed location during the body discovery with Maya's witness account and the keycard access log."
+        },
+        {
+          "id": "timeline-construction",
+          "title": "Corroborating Evidence",
+          "description": "Build a comprehensive timeline using all available evidence to identify the critical time gap.",
+          "type": "timeline",
+          "timeEstimate": 5,
+          "content": {
+            "events": [
+              { "time": "19:50", "description": "Pak Budi seen at ticket counters", "source": "Rahman's statement + CCTV", "confirmed": true },
+              { "time": "20:05", "description": "Rahman enters upper level", "source": "CCTV Camera 3", "confirmed": true },
+              { "time": "20:15", "description": "Rahman near storage area", "source": "Maya's witness account", "confirmed": true },
+              { "time": "20:18", "description": "Rahman accesses storage room", "source": "Security log", "confirmed": true },
+              { "time": "20:25", "description": "Rahman exits upper level", "source": "CCTV Camera 3", "confirmed": true },
+              { "time": "20:45", "description": "Body discovered by Agus", "source": "Multiple witnesses", "confirmed": true }
+            ],
+            "question": "During which time period was Rahman unaccounted for and near the crime scene?"
+          },
+          "validation": {
+            "type": "exact",
+            "value": "20:15-20:25"
+          },
+          "hintText": "Look for the overlap between Rahman's presence near the storage area and the estimated time of death (around 8:15 PM)."
+        }
+      ]
+    },
+    {
+      "id": "cctv-image-analysis",
+      "title": "CCTV Image Analysis",
+      "description": "Enhance blurry security footage and identify crucial visual evidence through careful analysis.",
+      "category": "analysis",
+      "totalTimeEstimate": 25,
+      "difficulty": 5,
+      "cluesRevealed": ["visual-evidence", "suspect-identification"],
+      "steps": [
+        {
+          "id": "image-enhancement",
+          "title": "Image Recovery",
+          "description": "Use image processing tools to enhance the blurry CCTV footage from camera 7.",
+          "type": "image-analysis",
+          "timeEstimate": 10,
+          "content": {
+            "originalImage": "/images/evidence/cctv-blurry-original.jpg",
+            "tools": [
+              { "name": "brightness", "min": -50, "max": 50, "default": 0 },
+              { "name": "contrast", "min": 0, "max": 200, "default": 100 },
+              { "name": "saturation", "min": 0, "max": 200, "default": 100 },
+              { "name": "blur", "min": 0, "max": 10, "default": 0 }
+            ],
+            "targetSettings": {
+              "brightness": 20,
+              "contrast": 150,
+              "saturation": 80,
+              "blur": 0
+            },
+            "question": "Adjust the image settings to clearly reveal the object in the suspect's hand."
+          },
+          "validation": {
+            "type": "custom",
+            "value": "image_enhanced_successfully"
+          },
+          "hintText": "Try increasing contrast and brightness while reducing blur. The object should become clearly visible."
+        },
+        {
+          "id": "brand-identification",
+          "title": "Brand Identification",
+          "description": "Compare the enhanced image with known tool brands to identify the specific item.",
+          "type": "multiple-choice",
+          "timeEstimate": 8,
+          "content": {
+            "enhancedImage": "/images/evidence/cctv-enhanced.jpg",
+            "brandDatabase": [
+              { "brand": "Stanley", "image": "/images/tools/stanley-wrench.jpg", "distinctive": "Yellow handle with black grip" },
+              { "brand": "Craftsman", "image": "/images/tools/craftsman-wrench.jpg", "distinctive": "Red handle with silver head" },
+              { "brand": "Tekiro", "image": "/images/tools/tekiro-wrench.jpg", "distinctive": "Blue handle with chrome finish" },
+              { "brand": "Krisbow", "image": "/images/tools/krisbow-wrench.jpg", "distinctive": "Green handle with black band" }
+            ],
+            "question": "Based on the visible handle color and design, which brand wrench is shown in the enhanced CCTV image?",
+            "options": [
+              { "id": "stanley", "text": "Stanley - Yellow handle", "correct": false },
+              { "id": "craftsman", "text": "Craftsman - Red handle", "correct": false },
+              { "id": "tekiro", "text": "Tekiro - Blue handle", "correct": true },
+              { "id": "krisbow", "text": "Krisbow - Green handle", "correct": false }
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "tekiro"
+          },
+          "hintText": "Look carefully at the handle color visible in the enhanced image and match it with the brand characteristics."
+        },
+        {
+          "id": "ownership-correlation",
+          "title": "Ownership Correlation",
+          "description": "Cross-reference the identified tool brand with suspect profiles and station inventory records.",
+          "type": "text-input",
+          "timeEstimate": 7,
+          "content": {
+            "suspectTools": [
+              { "suspect": "Sari Indraswari", "tools": "Official station master equipment - no personal tools" },
+              { "suspect": "Rahman Pratama", "tools": "Security equipment, radio, no maintenance tools reported" },
+              { "suspect": "Maya Kusuma", "tools": "Computer peripherals, no mechanical tools" },
+              { "suspect": "Agus Santoso", "tools": "Full Tekiro tool set including wrenches - issued by maintenance department" },
+              { "suspect": "Indira Wulandari", "tools": "Cleaning equipment, no heavy tools" },
+              { "suspect": "Bayu Nugroho", "tools": "Audio equipment, no mechanical tools" },
+              { "suspect": "Fitri Maharani", "tools": "Kitchen equipment and utensils" }
+            ],
+            "stationInventory": "Maintenance department issued Tekiro tool sets to all engineering staff in 2023",
+            "question": "Which suspect would have legitimate access to a Tekiro wrench matching the one in the CCTV footage?"
+          },
+          "validation": {
+            "type": "contains",
+            "value": "Agus Santoso",
+            "caseSensitive": false
+          },
+          "hintText": "Look for the suspect whose job role would require professional tools and match it with the brand identified."
+        }
+      ]
+    },
+    {
+      "id": "mathematical-schedule-analysis",
+      "title": "Mathematical Schedule Analysis", 
+      "description": "Use calculations and data analysis to uncover scheduling anomalies and identify suspicious patterns.",
+      "category": "calculation",
+      "totalTimeEstimate": 20,
+      "difficulty": 4,
+      "cluesRevealed": ["scheduling-anomaly", "motive-evidence"],
+      "steps": [
+        {
+          "id": "time-calculations",
+          "title": "Basic Time Calculations",
+          "description": "Calculate train intervals and departure times to identify potential scheduling conflicts.",
+          "type": "calculation",
+          "timeEstimate": 7,
+          "content": {
+            "schedule": [
+              { "route": "Bogor", "departure": "19:30", "duration": 45, "frequency": 15 },
+              { "route": "Bekasi", "departure": "19:45", "duration": 35, "frequency": 20 },
+              { "route": "Serpong", "departure": "19:50", "duration": 50, "frequency": 18 },
+              { "route": "Tanah Abang", "departure": "20:00", "duration": 25, "frequency": 12 }
+            ],
+            "question": "If the Bekasi train (departing 19:45) was delayed by 15 minutes, and trains must maintain 5-minute minimum intervals between departures, what would be the earliest possible departure time?",
+            "constraints": [
+              "Original Bekasi departure: 19:45",
+              "Delay: +15 minutes", 
+              "Serpong departure: 19:50 (cannot be moved)",
+              "Minimum interval: 5 minutes between departures"
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "20:05"
+          },
+          "hintText": "Calculate: 19:45 + 15 minutes delay = 20:00. But Serpong is at 19:50, so next available slot with 5-min interval after Serpong would be..."
+        },
+        {
+          "id": "staff-schedule-correlation",
+          "title": "Staff Schedule Correlation",
+          "description": "Analyze staff work schedules to identify who had access during the critical time period.",
+          "type": "multiple-choice",
+          "timeEstimate": 8,
+          "content": {
+            "staffSchedules": [
+              { "name": "Sari Indraswari", "shift": "07:00-20:00", "break": "18:00-18:30", "location": "Control room" },
+              { "name": "Rahman Pratama", "shift": "19:00-03:00", "break": "22:00-22:30", "location": "Patrol duties" },
+              { "name": "Maya Kusuma", "shift": "14:00-22:00", "break": "19:00-19:30", "location": "Ticket counter" },
+              { "name": "Agus Santoso", "shift": "18:00-02:00", "break": "21:00-21:30", "location": "Maintenance areas" },
+              { "name": "Indira Wulandari", "shift": "06:00-14:00", "break": "10:00-10:30", "location": "Station cleaning" },
+              { "name": "Bayu Nugroho", "shift": "16:00-00:00", "break": "20:00-20:30", "location": "Announcement booth" },
+              { "name": "Fitri Maharani", "shift": "05:00-21:00", "break": "17:00-17:30", "location": "Canteen" }
+            ],
+            "crimeTime": "20:15",
+            "question": "At 20:15 (the estimated time of murder), which staff members were officially on duty and had access to the maintenance/storage areas?",
+            "options": [
+              { "id": "rahman-agus", "text": "Rahman Pratama and Agus Santoso", "correct": true },
+              { "id": "sari-maya", "text": "Sari Indraswari and Maya Kusuma", "correct": false },
+              { "id": "bayu-fitri", "text": "Bayu Nugroho and Fitri Maharani", "correct": false },
+              { "id": "all-staff", "text": "All staff were on duty", "correct": false }
+            ]
+          },
+          "validation": {
+            "type": "exact",
+            "value": "rahman-agus"
+          },
+          "hintText": "Check who was on duty at 20:15 and whose job responsibilities include access to maintenance/storage areas."
+        },
+        {
+          "id": "passenger-anomaly-analysis",
+          "title": "Passenger Count Analysis",
+          "description": "Analyze passenger flow data to identify statistical anomalies during the incident timeframe.",
+          "type": "calculation",
+          "timeEstimate": 5,
+          "content": {
+            "passengerData": [
+              { "time": "19:00", "arrivals": 120, "departures": 95, "platform_2": 45 },
+              { "time": "19:15", "arrivals": 135, "departures": 110, "platform_2": 52 },
+              { "time": "19:30", "arrivals": 142, "departures": 125, "platform_2": 38 },
+              { "time": "19:45", "arrivals": 156, "departures": 98, "platform_2": 67 },
+              { "time": "20:00", "arrivals": 134, "departures": 145, "platform_2": 23 },
+              { "time": "20:15", "arrivals": 98, "departures": 156, "platform_2": 8 },
+              { "time": "20:30", "arrivals": 87, "departures": 134, "platform_2": 15 }
+            ],
+            "question": "Calculate the percentage drop in Platform 2 passenger count between 19:45 and 20:15. Round to the nearest whole number.",
+            "context": "This drop corresponds to the time when the Bekasi train was delayed and the incident occurred."
+          },
+          "validation": {
+            "type": "numeric",
+            "value": 88
+          },
+          "hintText": "Calculate: ((67 - 8) / 67) × 100. This dramatic drop suggests passengers were redirected or the area was cleared."
+        }
+      ]
+    }
+  ]
+} 

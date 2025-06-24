@@ -1,0 +1,160 @@
+{
+  "clues": [
+    {
+      "id": "victim-last-movement",
+      "title": "Victim's Final Journey",
+      "content": "Pak Budi was seen heading towards Platform 2 at 19:45, seemingly in a hurry to catch the delayed Bekasi train. Security footage shows he appeared frustrated and kept checking his watch.",
+      "category": "timeline",
+      "revealCondition": {
+        "puzzleId": "train-schedule-investigation",
+        "stepId": "platform-identification"
+      },
+      "importance": "important",
+      "relatedSuspects": ["rahman-security"],
+      "relatedEvidence": ["cctv-footage-platform-2"]
+    },
+    {
+      "id": "suspicious-timing",
+      "title": "Delayed Train Opportunity",
+      "content": "The 19:45 Bekasi train was delayed by 10 minutes, creating an unexpected window of time when Platform 2 area was less crowded than usual. This delay may have provided the murderer with an opportunity.",
+      "category": "timeline",
+      "revealCondition": {
+        "puzzleId": "train-schedule-investigation",
+        "stepId": "schedule-analysis"
+      },
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "relatedEvidence": ["train-schedule-board"]
+    },
+    {
+      "id": "secret-meeting",
+      "title": "Arranged Rendezvous",
+      "content": "A coded message arranged a secret meeting at the storage room for 20:15. The use of cipher suggests the meeting was meant to be kept secret from other staff members.",
+      "category": "evidence",
+      "revealCondition": {
+        "puzzleId": "lost-luggage-cipher",
+        "stepId": "caesar-cipher-decoding"
+      },
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security", "agus-maintenance"],
+      "relatedEvidence": ["luggage-tag-cipher"]
+    },
+    {
+      "id": "coded-threat",
+      "title": "Secret Communication System",
+      "content": "The perpetrator was using luggage tags as a covert communication method, suggesting premeditation and insider knowledge of station operations. Only someone familiar with luggage handling procedures would use this method.",
+      "category": "method",
+      "revealCondition": {
+        "puzzleId": "lost-luggage-cipher",
+        "stepId": "evidence-locker-access"
+      },
+      "importance": "important",
+      "relatedSuspects": ["rahman-security", "agus-maintenance", "indira-cleaner"],
+      "relatedEvidence": ["luggage-tag-cipher"]
+    },
+    {
+      "id": "hidden-evidence",
+      "title": "Concealed Murder Weapon",
+      "content": "A bloodstained wrench was discovered hidden in Depot A, specifically in the morning shift area. The location suggests the murderer had detailed knowledge of depot schedules and areas with minimal foot traffic.",
+      "category": "evidence",
+      "revealCondition": {
+        "puzzleId": "station-environment-riddle",
+        "stepId": "evidence-discovery-360"
+      },
+      "importance": "critical",
+      "relatedSuspects": ["agus-maintenance", "rahman-security"],
+      "relatedEvidence": ["bloodstained-wrench"]
+    },
+    {
+      "id": "secret-location",
+      "title": "Murderer's Local Knowledge",
+      "content": "The killer demonstrated intimate knowledge of station layout, particularly the maintenance areas and shift schedules. The choice of hiding location indicates someone who works regularly in or monitors these areas.",
+      "category": "location",
+      "revealCondition": {
+        "puzzleId": "station-environment-riddle",
+        "stepId": "platform-identification-map"
+      },
+      "importance": "important",
+      "relatedSuspects": ["agus-maintenance", "rahman-security", "sari-station-master"],
+      "relatedEvidence": ["depot-access-logs"]
+    },
+    {
+      "id": "alibi-contradiction",
+      "title": "Rahman's False Alibi",
+      "content": "Rahman Pratama's witness statement contains a significant lie. He claimed to be near the information desk when the body was discovered, but evidence shows he was actually at the storage area during the critical time period.",
+      "category": "suspect",
+      "revealCondition": {
+        "puzzleId": "witness-statement-analysis",
+        "stepId": "alibi-verification"
+      },
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "relatedEvidence": ["cctv-footage-upper-level", "keycard-access-log"]
+    },
+    {
+      "id": "timeline-gap",
+      "title": "Unaccounted Time Window",
+      "content": "Rahman had a 10-minute window (20:15-20:25) where he was near the crime scene with no reliable alibi. This coincides exactly with the estimated time of murder and his keycard access to the storage room.",
+      "category": "timeline",
+      "revealCondition": {
+        "puzzleId": "witness-statement-analysis",
+        "stepId": "timeline-construction"
+      },
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "relatedEvidence": ["keycard-access-log", "witness-statement-maya"]
+    },
+    {
+      "id": "visual-evidence",
+      "title": "Weapon in CCTV Footage",
+      "content": "Enhanced CCTV footage clearly shows a suspect carrying a Tekiro-brand wrench near the time of the murder. The enhancement reveals distinctive blue handle coloring characteristic of Tekiro tools.",
+      "category": "evidence",
+      "revealCondition": {
+        "puzzleId": "cctv-image-analysis",
+        "stepId": "brand-identification"
+      },
+      "importance": "critical",
+      "relatedSuspects": ["agus-maintenance"],
+      "relatedEvidence": ["cctv-enhanced-footage", "tekiro-wrench"]
+    },
+    {
+      "id": "suspect-identification",
+      "title": "Tool Ownership Connection",
+      "content": "The Tekiro wrench seen in CCTV footage matches tools officially issued to maintenance department staff. However, the tool's presence during the murder suggests it may have been stolen or borrowed by someone outside the maintenance team.",
+      "category": "suspect",
+      "revealCondition": {
+        "puzzleId": "cctv-image-analysis",
+        "stepId": "ownership-correlation"
+      },
+      "importance": "important",
+      "relatedSuspects": ["agus-maintenance", "rahman-security"],
+      "relatedEvidence": ["maintenance-tool-inventory", "tekiro-wrench"]
+    },
+    {
+      "id": "scheduling-anomaly",
+      "title": "Deliberate Train Delay",
+      "content": "Mathematical analysis reveals the Bekasi train delay created an unusual 88% drop in Platform 2 passenger traffic, providing an isolated environment for the crime. This level of passenger reduction is statistically significant.",
+      "category": "method",
+      "revealCondition": {
+        "puzzleId": "mathematical-schedule-analysis",
+        "stepId": "passenger-anomaly-analysis"
+      },
+      "importance": "important",
+      "relatedSuspects": ["sari-station-master", "rahman-security"],
+      "relatedEvidence": ["passenger-flow-data", "train-delay-records"]
+    },
+    {
+      "id": "motive-evidence",
+      "title": "Financial Corruption Discovery",
+      "content": "Rahman Pratama had discovered Pak Budi was embezzling funds meant for security improvements. Rahman was gathering evidence to expose the corruption, but Pak Budi learned of the investigation and threatened Rahman's career.",
+      "category": "motive",
+      "revealCondition": {
+        "puzzleId": "mathematical-schedule-analysis",
+        "stepId": "staff-schedule-correlation"
+      },
+      "importance": "critical",
+      "relatedSuspects": ["rahman-security"],
+      "relatedEvidence": ["financial-records", "security-budget-discrepancies"]
+    }
+  ]
+} 
