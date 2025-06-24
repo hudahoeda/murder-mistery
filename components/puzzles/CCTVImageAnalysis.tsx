@@ -11,9 +11,11 @@ import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CheckCircle, Clock, AlertTriangle, Camera, Search, Users, Settings } from 'lucide-react';
+import { PuzzleStep } from '@/lib/types/game';
 
 interface CCTVImageAnalysisProps {
-  onComplete: (success: boolean, timeSpent: number) => void;
+  step: PuzzleStep;
+  onStepComplete: (answer: any, isCorrect: boolean) => void;
   onHintUsed: () => void;
 }
 
@@ -36,11 +38,10 @@ interface SuspectTool {
 }
 
 const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
-  onComplete,
+  step,
+  onStepComplete,
   onHintUsed,
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [startTime] = useState(Date.now());
   const [imageSettings, setImageSettings] = useState<ImageSettings>({
     brightness: 0,
     contrast: 100,
@@ -158,37 +159,23 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
 
   const handleStepSubmit = () => {
     let isCorrect = false;
-    
-    if (currentStep === 1) {
-      isCorrect = validateStep1();
-    } else if (currentStep === 2) {
-      isCorrect = validateStep2();
-    } else if (currentStep === 3) {
-      isCorrect = validateStep3();
-    }
+    let answer: any = null;
 
-    const newResults = [...stepResults];
-    newResults[currentStep - 1] = isCorrect;
-    setStepResults(newResults);
-
-    if (isCorrect) {
-      if (currentStep === 3) {
-        const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-        onComplete(true, timeSpent);
-      } else {
-        setCurrentStep(currentStep + 1);
-      }
+    switch(step.id) {
+        case 'image-enhancement':
+            isCorrect = validateStep1();
+            answer = imageSettings;
+            break;
+        case 'brand-identification':
+            isCorrect = validateStep2();
+            answer = selectedBrand;
+            break;
+        case 'ownership-correlation':
+            isCorrect = validateStep3();
+            answer = ownershipAnswer;
+            break;
     }
-  };
-
-  const getStepIcon = (stepNum: number) => {
-    if (stepResults[stepNum - 1] === true) {
-      return <CheckCircle className="w-5 h-5 text-green-500" />;
-    } else if (stepNum === currentStep) {
-      return <Clock className="w-5 h-5 text-blue-500 animate-spin" />;
-    } else {
-      return <div className="w-5 h-5 rounded-full border-2 border-gray-300" />;
-    }
+    onStepComplete(answer, isCorrect);
   };
 
   const renderStep1 = () => (
@@ -465,59 +452,25 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-3">
             <Camera className="w-8 h-8 text-blue-600" />
-            CCTV Image Analysis
+            {step.title}
           </CardTitle>
           <CardDescription className="text-lg">
-            Enhance blurry security footage and identify crucial visual evidence through careful analysis
+            {step.description}
           </CardDescription>
         </CardHeader>
       </Card>
 
-      {/* Progress Steps */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              {getStepIcon(1)}
-              <span className={currentStep === 1 ? 'font-semibold text-blue-600' : 'text-gray-600'}>
-                Image Enhancement
-              </span>
-            </div>
-            <div className="flex-1 mx-4">
-              <Progress value={currentStep >= 2 ? 100 : currentStep === 1 ? 50 : 0} className="h-2" />
-            </div>
-            <div className="flex items-center gap-3">
-              {getStepIcon(2)}
-              <span className={currentStep === 2 ? 'font-semibold text-blue-600' : 'text-gray-600'}>
-                Brand Identification
-              </span>
-            </div>
-            <div className="flex-1 mx-4">
-              <Progress value={currentStep >= 3 ? 100 : currentStep === 2 ? 50 : 0} className="h-2" />
-            </div>
-            <div className="flex items-center gap-3">
-              {getStepIcon(3)}
-              <span className={currentStep === 3 ? 'font-semibold text-blue-600' : 'text-gray-600'}>
-                Ownership Correlation
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Current Step Content */}
-      {currentStep === 1 && renderStep1()}
-      {currentStep === 2 && renderStep2()}
-      {currentStep === 3 && renderStep3()}
+      {step.id === 'image-enhancement' && renderStep1()}
+      {step.id === 'brand-identification' && renderStep2()}
+      {step.id === 'ownership-correlation' && renderStep3()}
 
       {/* Hint Alert */}
       {showHint && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {currentStep === 1 && "Try increasing contrast and brightness while reducing blur. Look for the optimal settings that make the tool clearly visible."}
-            {currentStep === 2 && "Look carefully at the handle color visible in the enhanced image. Blue handle with chrome finish is the key characteristic."}
-            {currentStep === 3 && "Look for the suspect whose job role would require professional tools and match it with the Tekiro brand identified."}
+            {step.hintText}
           </AlertDescription>
         </Alert>
       )}
@@ -534,12 +487,12 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
         <Button 
           onClick={handleStepSubmit}
           disabled={
-            (currentStep === 1 && !imageEnhanced) ||
-            (currentStep === 2 && !selectedBrand) ||
-            (currentStep === 3 && !ownershipAnswer)
+            (step.id === 'image-enhancement' && !imageEnhanced) ||
+            (step.id === 'brand-identification' && !selectedBrand) ||
+            (step.id === 'ownership-correlation' && !ownershipAnswer)
           }
         >
-          {currentStep === 3 ? 'Complete Analysis' : 'Next Step'}
+          Submit Answer
         </Button>
       </div>
     </div>

@@ -1,22 +1,58 @@
 'use client';
 
+import React, { useState, useEffect, Suspense } from 'react';
 import { Metadata } from 'next'
-import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Calculator, Calendar, Users, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import MathematicalScheduleAnalysis from '@/components/puzzles/MathematicalScheduleAnalysis'
+import { Puzzle as PuzzleType, PuzzleStep } from '@/lib/types/game';
+import puzzlesData from '@/lib/data/puzzles.json';
+import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 
 export default function MathematicalAnalysisDemoPage() {
-  const handlePuzzleComplete = (success: boolean, timeSpent: number) => {
-    console.log('Mathematical Analysis Demo completed:', { success, timeSpent })
-    alert(`Demo completed! Success: ${success}, Time: ${timeSpent}s`)
-  }
+  const [puzzle, setPuzzle] = useState<PuzzleType | null>(null);
+  const [currentStep, setCurrentStep] = useState<PuzzleStep | null>(null);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [puzzleCompleted, setPuzzleCompleted] = useState(false);
+
+  useEffect(() => {
+    const mathPuzzle = (puzzlesData.puzzles as any as PuzzleType[]).find(p => p.id === 'mathematical-schedule-analysis');
+    if (mathPuzzle) {
+      setPuzzle(mathPuzzle);
+      setCurrentStep(mathPuzzle.steps[0]);
+      setStepIndex(0);
+    }
+  }, []);
+
+  const handleStepComplete = (answer: any, isCorrect: boolean) => {
+    if (isCorrect) {
+      if (puzzle && stepIndex < puzzle.steps.length - 1) {
+        const nextStepIndex = stepIndex + 1;
+        setStepIndex(nextStepIndex);
+        setCurrentStep(puzzle.steps[nextStepIndex]);
+      } else {
+        alert(`🎉 Puzzle completed successfully!`);
+        setPuzzleCompleted(true);
+      }
+    } else {
+      alert('❌ Incorrect answer. Please try again.');
+    }
+  };
 
   const handleHintUsed = () => {
     console.log('Hint requested in Mathematical Analysis demo')
+  }
+
+  if (!puzzle || !currentStep) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <p className="text-white">Loading puzzle...</p>
+      </div>
+    );
   }
 
   return (
@@ -33,7 +69,7 @@ export default function MathematicalAnalysisDemoPage() {
             </Button>
             <div>
               <h1 className="text-xl font-bold text-amber-100">Mathematical Schedule Analysis Demo</h1>
-              <p className="text-sm text-slate-400">Calculations & Statistical Analysis System</p>
+              <p className="text-sm text-slate-400">Data & Logic Puzzle System</p>
             </div>
           </div>
           
@@ -53,72 +89,43 @@ export default function MathematicalAnalysisDemoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <p className="text-slate-300">
-                This demo showcases the Mathematical Schedule Analysis puzzle with train schedule calculations, 
-                staff correlation analysis, and passenger flow anomaly detection.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-blue-400" />
-                    <h3 className="font-semibold text-blue-200">Step 1: Time Calculations</h3>
-                  </div>
-                  <p className="text-blue-100 text-sm">
-                    Calculate train departure conflicts considering delays and minimum interval requirements between services.
-                  </p>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-green-400">{puzzle.steps.length}</div>
+                    <div className="text-sm text-slate-400">Interactive Steps</div>
                 </div>
-                
-                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-4 h-4 text-green-400" />
-                    <h3 className="font-semibold text-green-200">Step 2: Staff Correlation</h3>
-                  </div>
-                  <p className="text-green-100 text-sm">
-                    Analyze staff work schedules to identify who had access to critical areas during the murder timeframe.
-                  </p>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-400">{puzzle.totalTimeEstimate}</div>
+                    <div className="text-sm text-slate-400">Estimated Minutes</div>
                 </div>
-                
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-4 h-4 text-orange-400" />
-                    <h3 className="font-semibold text-orange-200">Step 3: Passenger Anomaly</h3>
-                  </div>
-                  <p className="text-orange-100 text-sm">
-                    Statistical analysis of passenger flow data to identify significant anomalies during the incident period.
-                  </p>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-400">{puzzle.difficulty}/5</div>
+                    <div className="text-sm text-slate-400">Difficulty Level</div>
                 </div>
-              </div>
-              
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                <h3 className="font-semibold text-amber-200 mb-2">Demo Features:</h3>
-                <ul className="text-amber-100 space-y-1 text-sm">
-                  <li>• Interactive train schedule tables with delay calculations</li>
-                  <li>• Step-by-step mathematical problem solving with constraints</li>
-                  <li>• Staff schedule matrix with duty/break time analysis</li>
-                  <li>• Color-coded shift overlaps and access privilege indicators</li>
-                  <li>• Passenger flow charts with statistical variance analysis</li>
-                  <li>• Anomaly detection with configurable significance thresholds</li>
-                </ul>
-              </div>
+            </div>
+            <div className="mt-4">
+              <Label>Progress</Label>
+              <Progress value={((stepIndex + 1) / puzzle.steps.length) * 100} className="w-full" />
+              <p className="text-sm text-slate-400 mt-1 text-center">Step {stepIndex + 1} of {puzzle.steps.length}: {currentStep.title}</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Puzzle Demo */}
-        <Suspense fallback={
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="text-slate-400">Loading Mathematical Analysis Demo...</div>
-            </CardContent>
-          </Card>
-        }>
+        {!puzzleCompleted ? (
           <MathematicalScheduleAnalysis 
-            onComplete={handlePuzzleComplete}
+            step={currentStep}
+            onStepComplete={handleStepComplete}
             onHintUsed={handleHintUsed}
           />
-        </Suspense>
+        ) : (
+            <Card>
+                <CardContent className="p-8 text-center">
+                <h2 className="text-2xl font-bold text-green-400 mb-4">Demo Complete!</h2>
+                <p className="text-slate-300">You successfully tested the mathematical analysis puzzle.</p>
+                </CardContent>
+            </Card>
+        )}
       </div>
     </div>
   )

@@ -117,7 +117,8 @@ export function calculateElapsedTime(startTime: Date, endTime?: Date): number {
 const STORAGE_KEYS = {
   TEAMS: 'murder-mystery-teams',
   GAME_SESSION: 'murder-mystery-session',
-  TEAM_PROGRESS: 'murder-mystery-progress'
+  TEAM_PROGRESS: 'murder-mystery-progress',
+  ACTIVE_TEAM_ID: 'murder-mystery-active-team-id'
 } as const
 
 export function saveTeamData(team: Team): void {
@@ -150,6 +151,25 @@ export function getTeamsFromStorage(): Team[] {
 export function getTeamById(teamId: string): Team | null {
   const teams = getTeamsFromStorage()
   return teams.find(team => team.id === teamId) || null
+}
+
+export function setActiveTeam(teamId: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_TEAM_ID, teamId);
+  } catch (error) {
+    console.error('Failed to set active team:', error);
+  }
+}
+
+export function getActiveTeam(): Team | null {
+  try {
+    const activeTeamId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TEAM_ID);
+    if (!activeTeamId) return null;
+    return getTeamById(activeTeamId);
+  } catch (error) {
+    console.error('Failed to get active team:', error);
+    return null;
+  }
 }
 
 export function clearGameData(): void {

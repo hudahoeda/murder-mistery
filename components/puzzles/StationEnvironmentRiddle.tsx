@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Circle, Eye, RotateCcw, ZoomIn } from 'lucide-react';
+import { PuzzleStep } from '@/lib/types/game';
 
 interface StationEnvironmentRiddleProps {
-  step: number;
+  step: PuzzleStep;
   onStepComplete: (answer: any, isCorrect: boolean) => void;
   className?: string;
 }
@@ -31,22 +32,12 @@ const LocationRiddleStep = ({ step, onStepComplete }: StationEnvironmentRiddlePr
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [showHint, setShowHint] = useState<boolean>(false);
 
-  const riddleText = `Where trains rest but never sleep,
-Where metal giants quietly keep,
-Their secrets locked in numbered bays,
-Away from passengers' hurried ways.
-Between the platforms, out of sight,
-Where morning comes before the night.`;
+  const riddleText = step.content.riddle;
 
-  const riddleOptions = [
-    { id: 'passenger-waiting', text: 'Passenger Waiting Area' },
-    { id: 'train-depot', text: 'Train Maintenance Depot' },
-    { id: 'ticket-office', text: 'Ticket Office' },
-    { id: 'food-court', text: 'Food Court' }
-  ];
+  const riddleOptions = step.content.options;
 
   const handleSubmit = () => {
-    const isCorrect = selectedAnswer === 'train-depot';
+    const isCorrect = selectedAnswer === step.validation.value;
     onStepComplete(selectedAnswer, isCorrect);
   };
 
@@ -61,7 +52,7 @@ Where morning comes before the night.`;
       <CardContent className="space-y-6">
         <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-lg border border-amber-200 dark:border-amber-800">
           <p className="text-center italic text-lg leading-relaxed font-serif text-amber-900 dark:text-amber-100">
-            {riddleText.split('\n').map((line, index) => (
+            {riddleText.split('\n').map((line: string, index: number) => (
               <span key={index}>
                 {line}
                 {index < riddleText.split('\n').length - 1 && <br />}
@@ -75,7 +66,7 @@ Where morning comes before the night.`;
             Which station area does this riddle describe?
           </p>
           <div className="grid gap-2">
-            {riddleOptions.map((option) => (
+            {riddleOptions.map((option: { id: string, text: string }) => (
               <label
                 key={option.id}
                 className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
@@ -134,15 +125,10 @@ const StationMapStep = ({ step, onStepComplete }: StationEnvironmentRiddleProps)
   const [selectedDepot, setSelectedDepot] = useState<string>('');
   const [showHint, setShowHint] = useState<boolean>(false);
 
-  const depotOptions = [
-    { id: 'depot-a', text: 'Depot A - Morning Shift' },
-    { id: 'depot-b', text: 'Depot B - Evening Shift' },
-    { id: 'depot-c', text: 'Depot C - Night Shift' },
-    { id: 'depot-d', text: 'Depot D - Maintenance Only' }
-  ];
+  const depotOptions = step.content.options;
 
   const handleSubmit = () => {
-    const isCorrect = selectedDepot === 'depot-a';
+    const isCorrect = selectedDepot === step.validation.value;
     onStepComplete(selectedDepot, isCorrect);
   };
 
@@ -218,7 +204,7 @@ const StationMapStep = ({ step, onStepComplete }: StationEnvironmentRiddleProps)
             Based on the riddle's last line "Where morning comes before the night", which depot should you investigate?
           </p>
           <div className="grid gap-2">
-            {depotOptions.map((option) => (
+            {depotOptions.map((option: { id: string, text: string }) => (
               <label
                 key={option.id}
                 className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
@@ -279,15 +265,10 @@ const EvidenceDiscoveryStep = ({ step, onStepComplete }: StationEnvironmentRiddl
   const [panoramicRotation, setPanoramicRotation] = useState<number>(0);
   const [hoveredHotspot, setHoveredHotspot] = useState<string>('');
 
-  const evidenceOptions = [
-    { id: 'bloody-knife', text: 'A bloodstained knife' },
-    { id: 'bloodstained-wrench', text: 'A bloodstained wrench' },
-    { id: 'torn-clothing', text: 'Torn clothing' },
-    { id: 'fingerprints', text: 'Clear fingerprints' }
-  ];
+  const evidenceOptions = step.content.options;
 
   const handleSubmit = () => {
-    const isCorrect = selectedEvidence === 'bloodstained-wrench';
+    const isCorrect = selectedEvidence === step.validation.value;
     onStepComplete(selectedEvidence, isCorrect);
   };
 
@@ -418,7 +399,7 @@ const EvidenceDiscoveryStep = ({ step, onStepComplete }: StationEnvironmentRiddl
             What evidence item can you find hidden in this depot?
           </p>
           <div className="grid gap-2">
-            {evidenceOptions.map((option) => (
+            {evidenceOptions.map((option: { id: string, text: string }) => (
               <label
                 key={option.id}
                 className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
@@ -474,13 +455,14 @@ const EvidenceDiscoveryStep = ({ step, onStepComplete }: StationEnvironmentRiddl
 
 // Main Station Environment Riddle Component
 export const StationEnvironmentRiddle = ({ step, onStepComplete, className }: StationEnvironmentRiddleProps) => {
-  if (step === 1) {
-    return <LocationRiddleStep step={step} onStepComplete={onStepComplete} />;
-  } else if (step === 2) {
-    return <StationMapStep step={step} onStepComplete={onStepComplete} />;
-  } else if (step === 3) {
-    return <EvidenceDiscoveryStep step={step} onStepComplete={onStepComplete} />;
+  switch (step.id) {
+    case 'location-riddle':
+      return <LocationRiddleStep step={step} onStepComplete={onStepComplete} />;
+    case 'platform-identification-map':
+      return <StationMapStep step={step} onStepComplete={onStepComplete} />;
+    case 'evidence-discovery-360':
+      return <EvidenceDiscoveryStep step={step} onStepComplete={onStepComplete} />;
+    default:
+      return null;
   }
-  
-  return null;
 }; 

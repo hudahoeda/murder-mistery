@@ -1,17 +1,44 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import WitnessStatementAnalysis from '@/components/puzzles/WitnessStatementAnalysis';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Users, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import { Puzzle as PuzzleType, PuzzleStep } from '@/lib/types/game';
+import puzzlesData from '@/lib/data/puzzles.json';
+import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
+
 
 export default function WitnessAnalysisDemoPage() {
-  const handlePuzzleComplete = (success: boolean, timeSpent: number) => {
-    if (success) {
-      alert(`🎉 Puzzle completed successfully in ${timeSpent} seconds!`);
+  const [puzzle, setPuzzle] = useState<PuzzleType | null>(null);
+  const [currentStep, setCurrentStep] = useState<PuzzleStep | null>(null);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [puzzleCompleted, setPuzzleCompleted] = useState(false);
+
+  useEffect(() => {
+    const witnessPuzzle = (puzzlesData.puzzles as any as PuzzleType[]).find(p => p.id === 'witness-statement-analysis');
+    if (witnessPuzzle) {
+      setPuzzle(witnessPuzzle);
+      setCurrentStep(witnessPuzzle.steps[0]);
+      setStepIndex(0);
+    }
+  }, []);
+
+  const handleStepComplete = (answer: any, isCorrect: boolean) => {
+    if (isCorrect) {
+      if (puzzle && stepIndex < puzzle.steps.length - 1) {
+        const nextStepIndex = stepIndex + 1;
+        setStepIndex(nextStepIndex);
+        setCurrentStep(puzzle.steps[nextStepIndex]);
+      } else {
+        alert('🎉 Puzzle completed successfully!');
+        setPuzzleCompleted(true);
+      }
     } else {
-      alert('❌ Puzzle not completed correctly. Try again!');
+      alert('❌ Incorrect answer. Please try again.');
     }
   };
 
@@ -19,15 +46,25 @@ export default function WitnessAnalysisDemoPage() {
     console.log('Hint used - tracking for analytics');
   };
 
+  if (!puzzle || !currentStep) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <p className="text-white">Loading puzzle...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-900">
       {/* Header */}
       <header className="bg-slate-800/80 border-b border-slate-700 p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="text-slate-400">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Game
+            <Button variant="ghost" size="sm" className="text-slate-400" asChild>
+              <Link href="/demo">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Demos
+              </Link>
             </Button>
             <div>
               <h1 className="text-xl font-bold text-amber-100">Puzzle Demo: Witness Statement Analysis</h1>
@@ -52,61 +89,43 @@ export default function WitnessAnalysisDemoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">3</div>
-                <div className="text-sm text-slate-400">Interactive Steps</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">22</div>
-                <div className="text-sm text-slate-400">Estimated Minutes</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">4/5</div>
-                <div className="text-sm text-slate-400">Difficulty Level</div>
-              </div>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-green-400">{puzzle.steps.length}</div>
+                    <div className="text-sm text-slate-400">Interactive Steps</div>
+                </div>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-400">{puzzle.totalTimeEstimate}</div>
+                    <div className="text-sm text-slate-400">Estimated Minutes</div>
+                </div>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-400">{puzzle.difficulty}/5</div>
+                    <div className="text-sm text-slate-400">Difficulty Level</div>
+                </div>
             </div>
-            
-            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-blue-200 text-sm">
-                <strong>Features:</strong> Text highlighting, evidence cross-referencing, interactive timeline construction, 
-                and alibi contradiction detection with multi-source evidence validation.
-              </p>
+            <div className="mt-4">
+              <Label>Progress</Label>
+              <Progress value={((stepIndex + 1) / puzzle.steps.length) * 100} className="w-full" />
+              <p className="text-sm text-slate-400 mt-1 text-center">Step {stepIndex + 1} of {puzzle.steps.length}: {currentStep.title}</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Puzzle Component */}
-        <WitnessStatementAnalysis 
-          onComplete={handlePuzzleComplete}
-          onHintUsed={handleHintUsed}
-        />
-        
-        {/* Development Notes */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-amber-100">Development Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 text-sm text-slate-300">
-              <div>
-                <strong className="text-amber-200">Step 1:</strong> Text extraction from Rahman's security statement with highlighting system for times, locations, and key information.
-              </div>
-              <div>
-                <strong className="text-amber-200">Step 2:</strong> Evidence cross-referencing with CCTV footage, witness accounts, and security logs to identify contradictions.
-              </div>
-              <div>
-                <strong className="text-amber-200">Step 3:</strong> Timeline construction showing Rahman's unaccounted time period overlapping with the estimated time of death.
-              </div>
-              <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                <p className="text-green-200">
-                  <strong>Validation:</strong> Multi-level validation system with partial credit for text extraction, 
-                  exact matching for contradiction identification, and flexible time format acceptance for timeline answers.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {!puzzleCompleted ? (
+            <WitnessStatementAnalysis 
+                step={currentStep}
+                onStepComplete={handleStepComplete}
+                onHintUsed={handleHintUsed}
+            />
+        ) : (
+            <Card>
+                <CardContent className="p-8 text-center">
+                <h2 className="text-2xl font-bold text-green-400 mb-4">Demo Complete!</h2>
+                <p className="text-slate-300">You successfully tested the witness analysis puzzle.</p>
+                </CardContent>
+            </Card>
+        )}
       </div>
     </div>
   );

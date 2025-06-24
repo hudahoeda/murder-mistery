@@ -1,22 +1,58 @@
 'use client';
 
+import React, { useState, useEffect, Suspense } from 'react';
 import { Metadata } from 'next'
-import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Camera, Settings, Search, Users } from 'lucide-react'
 import Link from 'next/link'
 import CCTVImageAnalysis from '@/components/puzzles/CCTVImageAnalysis'
+import { Puzzle as PuzzleType, PuzzleStep } from '@/lib/types/game';
+import puzzlesData from '@/lib/data/puzzles.json';
+import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 
 export default function CCTVAnalysisDemoPage() {
-  const handlePuzzleComplete = (success: boolean, timeSpent: number) => {
-    console.log('CCTV Analysis Demo completed:', { success, timeSpent })
-    alert(`Demo completed! Success: ${success}, Time: ${timeSpent}s`)
-  }
+  const [puzzle, setPuzzle] = useState<PuzzleType | null>(null);
+  const [currentStep, setCurrentStep] = useState<PuzzleStep | null>(null);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [puzzleCompleted, setPuzzleCompleted] = useState(false);
+
+  useEffect(() => {
+    const cctvPuzzle = (puzzlesData.puzzles as any as PuzzleType[]).find(p => p.id === 'cctv-image-analysis');
+    if (cctvPuzzle) {
+      setPuzzle(cctvPuzzle);
+      setCurrentStep(cctvPuzzle.steps[0]);
+      setStepIndex(0);
+    }
+  }, []);
+
+  const handleStepComplete = (answer: any, isCorrect: boolean) => {
+    if (isCorrect) {
+      if (puzzle && stepIndex < puzzle.steps.length - 1) {
+        const nextStepIndex = stepIndex + 1;
+        setStepIndex(nextStepIndex);
+        setCurrentStep(puzzle.steps[nextStepIndex]);
+      } else {
+        alert(`🎉 Puzzle completed successfully!`);
+        setPuzzleCompleted(true);
+      }
+    } else {
+      alert('❌ Incorrect answer. Please try again.');
+    }
+  };
 
   const handleHintUsed = () => {
     console.log('Hint requested in CCTV Analysis demo')
+  }
+
+  if (!puzzle || !currentStep) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <p className="text-white">Loading puzzle...</p>
+      </div>
+    );
   }
 
   return (
@@ -53,72 +89,43 @@ export default function CCTVAnalysisDemoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <p className="text-slate-300">
-                This demo showcases the CCTV Image Analysis puzzle with interactive image enhancement tools, 
-                brand identification database, and ownership correlation features.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Settings className="w-4 h-4 text-blue-400" />
-                    <h3 className="font-semibold text-blue-200">Step 1: Image Enhancement</h3>
-                  </div>
-                  <p className="text-blue-100 text-sm">
-                    Use Canvas-based sliders to adjust brightness, contrast, saturation, and blur to reveal hidden details in CCTV footage.
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-green-400">{puzzle.steps.length}</div>
+                    <div className="text-sm text-slate-400">Interactive Steps</div>
                 </div>
-                
-                <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Search className="w-4 h-4 text-indigo-400" />
-                    <h3 className="font-semibold text-indigo-200">Step 2: Brand Identification</h3>
-                  </div>
-                  <p className="text-indigo-100 text-sm">
-                    Compare enhanced image with tool brand database to identify the specific wrench model and manufacturer.
-                  </p>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-400">{puzzle.totalTimeEstimate}</div>
+                    <div className="text-sm text-slate-400">Estimated Minutes</div>
                 </div>
-                
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-4 h-4 text-orange-400" />
-                    <h3 className="font-semibold text-orange-200">Step 3: Ownership Correlation</h3>
-                  </div>
-                  <p className="text-orange-100 text-sm">
-                    Cross-reference identified tool with suspect profiles and station inventory to determine legitimate access.
-                  </p>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-400">{puzzle.difficulty}/5</div>
+                    <div className="text-sm text-slate-400">Difficulty Level</div>
                 </div>
-              </div>
-              
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                <h3 className="font-semibold text-amber-200 mb-2">Demo Features:</h3>
-                <ul className="text-amber-100 space-y-1 text-sm">
-                  <li>• Real-time Canvas image processing with filter effects</li>
-                  <li>• Interactive slider controls for brightness, contrast, saturation, and blur</li>
-                  <li>• Visual feedback when optimal enhancement settings are achieved</li>
-                  <li>• Brand comparison database with distinctive characteristics</li>
-                  <li>• Suspect tool inventory cross-referencing system</li>
-                  <li>• Multi-step validation with contextual hints</li>
-                </ul>
-              </div>
+            </div>
+            <div className="mt-4">
+              <Label>Progress</Label>
+              <Progress value={((stepIndex + 1) / puzzle.steps.length) * 100} className="w-full" />
+              <p className="text-sm text-slate-400 mt-1 text-center">Step {stepIndex + 1} of {puzzle.steps.length}: {currentStep.title}</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Puzzle Demo */}
-        <Suspense fallback={
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="text-slate-400">Loading CCTV Analysis Demo...</div>
-            </CardContent>
-          </Card>
-        }>
-          <CCTVImageAnalysis 
-            onComplete={handlePuzzleComplete}
+        {!puzzleCompleted ? (
+           <CCTVImageAnalysis 
+            step={currentStep}
+            onStepComplete={handleStepComplete}
             onHintUsed={handleHintUsed}
           />
-        </Suspense>
+        ) : (
+            <Card>
+                <CardContent className="p-8 text-center">
+                <h2 className="text-2xl font-bold text-green-400 mb-4">Demo Complete!</h2>
+                <p className="text-slate-300">You successfully tested the CCTV analysis puzzle.</p>
+                </CardContent>
+            </Card>
+        )}
       </div>
     </div>
   )

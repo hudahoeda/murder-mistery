@@ -112,7 +112,7 @@ export default function StationRiddleDemoPage() {
         {/* Puzzle Component */}
         {!puzzleCompleted ? (
           <StationEnvironmentRiddle
-            step={currentStepIndex + 1} // The component expects step number (1, 2, 3)
+            step={currentStep}
             onStepComplete={handleStepComplete}
           />
         ) : (
@@ -142,7 +142,7 @@ export default function StationRiddleDemoPage() {
               </div>
               <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
                 <p className="text-green-200">
-                  <strong>Validation:</strong> The component for this puzzle expects a `step` number (1-3) instead of a step object. The demo page now manages the step number and progression.
+                  <strong>Validation:</strong> The component for this puzzle now correctly receives a step object. The demo page now manages the step state and progression.
                 </p>
               </div>
             </div>

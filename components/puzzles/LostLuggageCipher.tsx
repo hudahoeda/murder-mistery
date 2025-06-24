@@ -282,7 +282,7 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
             <div>
               <h4 className="font-semibold text-amber-100 mb-3">Caesar Cipher Wheel</h4>
               <div className="flex flex-col items-center space-y-4">
-                <div className="relative w-48 h-48">
+                <div className="relative w-64 h-64">
                   {/* Outer ring (encrypted) */}
                   <div 
                     className="absolute inset-0 rounded-full border-4 border-amber-500 bg-slate-700 flex items-center justify-center text-xs font-mono"
@@ -291,16 +291,16 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
                     <div className="absolute inset-4 rounded-full border-2 border-slate-500 bg-slate-800">
                       {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter, index) => {
                         const angle = (index * 360) / 26 - 90
-                        const x = Math.cos(angle * Math.PI / 180) * 60
-                        const y = Math.sin(angle * Math.PI / 180) * 60
+                        const x = Math.cos(angle * Math.PI / 180) * 90
+                        const y = Math.sin(angle * Math.PI / 180) * 90
                         return (
                           <span
                             key={letter}
                             className="absolute text-amber-200 font-bold"
                             style={{
-                              left: `calc(50% + ${x}px - 6px)`,
-                              top: `calc(50% + ${y}px - 8px)`,
-                              transform: `rotate(${-wheelRotation}deg)`
+                              left: `calc(50% + ${x}px)`,
+                              top: `calc(50% + ${y}px)`,
+                              transform: `translate(-50%, -50%) rotate(${-wheelRotation}deg)`
                             }}
                           >
                             {letter}
@@ -314,15 +314,16 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
                   <div className="absolute inset-8 rounded-full border-2 border-slate-400 bg-slate-900 flex items-center justify-center">
                     {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter, index) => {
                       const angle = (index * 360) / 26 - 90
-                      const x = Math.cos(angle * Math.PI / 180) * 40
-                      const y = Math.sin(angle * Math.PI / 180) * 40
+                      const x = Math.cos(angle * Math.PI / 180) * 60
+                      const y = Math.sin(angle * Math.PI / 180) * 60
                       return (
                         <span
                           key={letter}
                           className="absolute text-slate-300 text-sm"
                           style={{
-                            left: `calc(50% + ${x}px - 4px)`,
-                            top: `calc(50% + ${y}px - 6px)`
+                            left: `calc(50% + ${x}px)`,
+                            top: `calc(50% + ${y}px)`,
+                            transform: 'translate(-50%, -50%)'
                           }}
                         >
                           {letter}

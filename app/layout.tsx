@@ -17,8 +17,12 @@ export const metadata: Metadata = {
   description: "A thrilling turn-based murder mystery game set in Jakarta's busiest railway station. Solve puzzles, gather clues, and unmask the killer.",
   keywords: ["murder mystery", "puzzle game", "team building", "detective game", "railway station"],
   authors: [{ name: "Murder Mystery Game Team" }],
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport = {
   themeColor: "#1a1a2e",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

@@ -10,9 +10,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CheckCircle, Clock, AlertTriangle, Calculator, Users, TrendingUp, Calendar } from 'lucide-react';
+import { PuzzleStep } from '@/lib/types/game';
 
 interface MathematicalScheduleAnalysisProps {
-  onComplete: (success: boolean, timeSpent: number) => void;
+  step: PuzzleStep;
+  onStepComplete: (answer: any, isCorrect: boolean) => void;
   onHintUsed: () => void;
 }
 
@@ -38,92 +40,51 @@ interface PassengerData {
 }
 
 const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> = ({
-  onComplete,
+  step,
+  onStepComplete,
   onHintUsed,
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [startTime] = useState(Date.now());
   const [timeCalculationAnswer, setTimeCalculationAnswer] = useState('');
   const [selectedStaff, setSelectedStaff] = useState('');
   const [anomalyAnswer, setAnomalyAnswer] = useState('');
   const [showHint, setShowHint] = useState(false);
-  const [stepResults, setStepResults] = useState<boolean[]>([]);
 
-  const trainSchedule: TrainSchedule[] = [
-    { route: "Bogor", departure: "19:30", duration: 45, frequency: 15 },
-    { route: "Bekasi", departure: "19:45", duration: 35, frequency: 20 },
-    { route: "Serpong", departure: "19:50", duration: 50, frequency: 18 },
-    { route: "Tanah Abang", departure: "20:00", duration: 25, frequency: 12 }
-  ];
-
-  const staffSchedules: StaffSchedule[] = [
-    { name: "Sari Indraswari", shift: "07:00-20:00", break: "18:00-18:30", location: "Control room" },
-    { name: "Rahman Pratama", shift: "19:00-03:00", break: "22:00-22:30", location: "Patrol duties" },
-    { name: "Maya Kusuma", shift: "14:00-22:00", break: "19:00-19:30", location: "Ticket counter" },
-    { name: "Agus Santoso", shift: "18:00-02:00", break: "21:00-21:30", location: "Maintenance areas" },
-    { name: "Indira Wulandari", shift: "06:00-14:00", break: "10:00-10:30", location: "Station cleaning" },
-    { name: "Bayu Nugroho", shift: "16:00-00:00", break: "20:00-20:30", location: "Announcement booth" },
-    { name: "Fitri Maharani", shift: "05:00-21:00", break: "17:00-17:30", location: "Canteen" }
-  ];
-
-  const passengerFlowData: PassengerData[] = [
-    { timeSlot: "19:00-19:15", expectedCount: 145, actualCount: 142, variance: -2.1 },
-    { timeSlot: "19:15-19:30", expectedCount: 168, actualCount: 164, variance: -2.4 },
-    { timeSlot: "19:30-19:45", expectedCount: 203, actualCount: 187, variance: -7.9 },
-    { timeSlot: "19:45-20:00", expectedCount: 189, actualCount: 156, variance: -17.5 },
-    { timeSlot: "20:00-20:15", expectedCount: 156, actualCount: 134, variance: -14.1 },
-    { timeSlot: "20:15-20:30", expectedCount: 134, actualCount: 118, variance: -11.9 },
-    { timeSlot: "20:30-20:45", expectedCount: 121, actualCount: 119, variance: -1.7 }
-  ];
+  const trainSchedule: TrainSchedule[] = step.content.schedule;
+  const staffSchedules: StaffSchedule[] = step.content.staffSchedules;
+  const passengerFlowData: PassengerData[] = step.content.passengerData;
 
   const validateStep1 = () => {
-    // Bekasi train: 19:45 + 15 min delay = 20:00
-    // Serpong at 19:50, so next slot with 5-min interval = 19:55 + 5 = 20:00
-    // But since delayed train is already at 20:00, next available is 20:05
-    return timeCalculationAnswer === '20:05' || timeCalculationAnswer === '8:05 PM';
+    return timeCalculationAnswer === step.validation.value;
   };
 
   const validateStep2 = () => {
-    return selectedStaff === 'rahman-agus';
+    return selectedStaff === step.validation.value;
   };
 
   const validateStep3 = () => {
-    return anomalyAnswer.includes('19:45-20:15') || anomalyAnswer.includes('7:45') || anomalyAnswer.includes('8:15');
+    // Using includes for flexibility with format
+    return (step.validation.value as string[]).some(val => anomalyAnswer.includes(val));
   };
 
   const handleStepSubmit = () => {
     let isCorrect = false;
-    
-    if (currentStep === 1) {
-      isCorrect = validateStep1();
-    } else if (currentStep === 2) {
-      isCorrect = validateStep2();
-    } else if (currentStep === 3) {
-      isCorrect = validateStep3();
-    }
+    let answer: any = null;
 
-    const newResults = [...stepResults];
-    newResults[currentStep - 1] = isCorrect;
-    setStepResults(newResults);
-
-    if (isCorrect) {
-      if (currentStep === 3) {
-        const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-        onComplete(true, timeSpent);
-      } else {
-        setCurrentStep(currentStep + 1);
-      }
+    switch(step.id) {
+        case 'time-calculations':
+            isCorrect = validateStep1();
+            answer = timeCalculationAnswer;
+            break;
+        case 'staff-schedule-correlation':
+            isCorrect = validateStep2();
+            answer = selectedStaff;
+            break;
+        case 'passenger-anomaly-analysis':
+            isCorrect = validateStep3();
+            answer = anomalyAnswer;
+            break;
     }
-  };
-
-  const getStepIcon = (stepNum: number) => {
-    if (stepResults[stepNum - 1] === true) {
-      return <CheckCircle className="w-5 h-5 text-green-500" />;
-    } else if (stepNum === currentStep) {
-      return <Clock className="w-5 h-5 text-blue-500 animate-spin" />;
-    } else {
-      return <div className="w-5 h-5 rounded-full border-2 border-gray-300" />;
-    }
+    onStepComplete(answer, isCorrect);
   };
 
   const getAnomalyRowClass = (variance: number) => {
@@ -155,7 +116,7 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
                 </tr>
               </thead>
               <tbody>
-                {trainSchedule.map((train, index) => (
+                {trainSchedule.map((train: TrainSchedule, index: number) => (
                   <tr key={index} className={train.route === 'Bekasi' ? 'bg-red-50 dark:bg-red-900/20' : ''}>
                     <td className="border border-gray-300 p-3 font-medium">{train.route}</td>
                     <td className="border border-gray-300 p-3 font-mono">{train.departure}</td>
@@ -166,7 +127,7 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
               </tbody>
             </table>
           </div>
-          {trainSchedule.find(t => t.route === 'Bekasi') && (
+          {trainSchedule.find((t: TrainSchedule) => t.route === 'Bekasi') && (
             <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg">
               <Badge className="bg-red-100 text-red-800 mb-2">DELAY ALERT</Badge>
               <p className="text-sm text-red-700 dark:text-red-300">
@@ -255,7 +216,7 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {staffSchedules.map((staff, index) => {
+            {staffSchedules.map((staff: StaffSchedule, index: number) => {
               const isOnDuty = staff.shift.includes('20:00') || 
                               (staff.shift.includes('19:00') && staff.shift.includes('03:00')) ||
                               (staff.shift.includes('18:00') && staff.shift.includes('02:00')) ||
@@ -383,7 +344,7 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
                 </tr>
               </thead>
               <tbody>
-                {passengerFlowData.map((data, index) => {
+                {passengerFlowData.map((data: PassengerData, index: number) => {
                   const isSignificant = Math.abs(data.variance) > 10;
                   return (
                     <tr key={index} className={isSignificant ? 'bg-red-50 dark:bg-red-900/20' : ''}>
@@ -471,59 +432,25 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-3">
             <Calculator className="w-8 h-8 text-purple-600" />
-            Mathematical Schedule Analysis
+            {step.title}
           </CardTitle>
           <CardDescription className="text-lg">
-            Use calculations and data analysis to uncover scheduling anomalies and identify suspicious patterns
+            {step.description}
           </CardDescription>
         </CardHeader>
       </Card>
 
-      {/* Progress Steps */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              {getStepIcon(1)}
-              <span className={currentStep === 1 ? 'font-semibold text-blue-600' : 'text-gray-600'}>
-                Time Calculations
-              </span>
-            </div>
-            <div className="flex-1 mx-4">
-              <Progress value={currentStep >= 2 ? 100 : currentStep === 1 ? 50 : 0} className="h-2" />
-            </div>
-            <div className="flex items-center gap-3">
-              {getStepIcon(2)}
-              <span className={currentStep === 2 ? 'font-semibold text-blue-600' : 'text-gray-600'}>
-                Staff Correlation
-              </span>
-            </div>
-            <div className="flex-1 mx-4">
-              <Progress value={currentStep >= 3 ? 100 : currentStep === 2 ? 50 : 0} className="h-2" />
-            </div>
-            <div className="flex items-center gap-3">
-              {getStepIcon(3)}
-              <span className={currentStep === 3 ? 'font-semibold text-blue-600' : 'text-gray-600'}>
-                Passenger Anomaly
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Current Step Content */}
-      {currentStep === 1 && renderStep1()}
-      {currentStep === 2 && renderStep2()}
-      {currentStep === 3 && renderStep3()}
+      {step.id === 'time-calculations' && renderStep1()}
+      {step.id === 'staff-schedule-correlation' && renderStep2()}
+      {step.id === 'passenger-anomaly-analysis' && renderStep3()}
 
       {/* Hint Alert */}
       {showHint && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {currentStep === 1 && "Calculate: 19:45 + 15 minutes delay = 20:00. But the Tanah Abang train is also at 20:00, so you need a 5-minute interval."}
-            {currentStep === 2 && "Check who was on duty at 20:15 and whose job responsibilities include access to maintenance/storage areas. Look for patrol and maintenance roles."}
-            {currentStep === 3 && "Look for time slots with variance greater than ±10%. The most significant drops in passenger count indicate the disruption period."}
+            {step.hintText}
           </AlertDescription>
         </Alert>
       )}
@@ -540,12 +467,12 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
         <Button 
           onClick={handleStepSubmit}
           disabled={
-            (currentStep === 1 && !timeCalculationAnswer) ||
-            (currentStep === 2 && !selectedStaff) ||
-            (currentStep === 3 && !anomalyAnswer)
+            (step.id === 'time-calculations' && !timeCalculationAnswer) ||
+            (step.id === 'staff-schedule-correlation' && !selectedStaff) ||
+            (step.id === 'passenger-anomaly-analysis' && !anomalyAnswer)
           }
         >
-          {currentStep === 3 ? 'Complete Analysis' : 'Next Step'}
+          Submit Answer
         </Button>
       </div>
     </div>

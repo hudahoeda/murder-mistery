@@ -1,369 +1,256 @@
-import { Metadata } from 'next'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Play, Puzzle, Train, RotateCcw, Lock, Move, Sparkles, CheckCircle, Zap, Users } from 'lucide-react'
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Phase 2 Investigation - Murder Mystery at Stasiun Manggarai',
-  description: 'Experience advanced interactive puzzles with drag & drop, cipher wheels, and multi-step investigations.',
-}
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getActiveTeam, setActiveTeam } from '@/lib/utils/gameUtils';
+import { Team } from '@/lib/types/game';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import Image from 'next/image';
+import { Clock, Users, FileText, Map, LogOut, Loader2 } from 'lucide-react';
+import puzzlesData from '@/lib/data/puzzles.json';
+import suspectsData from '@/lib/data/suspects.json';
+import evidenceData from '@/lib/data/evidence.json';
 
-export default function GamePage() {
+// Import all puzzle components
+import { TrainSchedulePuzzle } from '@/components/puzzles/TrainSchedulePuzzle';
+import { LostLuggageCipher } from '@/components/puzzles/LostLuggageCipher';
+import { StationEnvironmentRiddle } from '@/components/puzzles/StationEnvironmentRiddle';
+import WitnessStatementAnalysis from '@/components/puzzles/WitnessStatementAnalysis';
+import CCTVImageAnalysis from '@/components/puzzles/CCTVImageAnalysis';
+import MathematicalScheduleAnalysis from '@/components/puzzles/MathematicalScheduleAnalysis';
+
+const puzzleComponentMap: { [key: string]: React.FC<any> } = {
+  'train-schedule-investigation': TrainSchedulePuzzle,
+  'lost-luggage-cipher': LostLuggageCipher,
+  'station-environment-riddle': StationEnvironmentRiddle,
+  'witness-statement-analysis': WitnessStatementAnalysis,
+  'cctv-image-analysis': CCTVImageAnalysis,
+  'mathematical-schedule-analysis': MathematicalScheduleAnalysis,
+};
+
+const GameDashboard = () => {
+  const router = useRouter();
+  const [team, setTeam] = useState<Team | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  useEffect(() => {
+    const activeTeamId = localStorage.getItem('murder-mystery-active-team-id');
+
+    if (!activeTeamId) {
+      router.push('/game/register');
+      return;
+    }
+
+    const fetchTeamData = async () => {
+      try {
+        const response = await fetch(`/api/team/${activeTeamId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch team data');
+        }
+        const data: Team = await response.json();
+        setTeam(data);
+      } catch (error) {
+        console.error(error);
+        // If team not found on server, clear local storage and redirect
+        localStorage.removeItem('murder-mystery-active-team-id');
+        router.push('/game/register');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeamData();
+  }, [router]);
+
+  const handleStepComplete = async (answer: any, isCorrect: boolean) => {
+    if (!team || !currentPuzzle) return;
+    
+    try {
+      const response = await fetch(`/api/team/${team.id}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          puzzleId: currentPuzzle.id,
+          stepId: currentPuzzle.steps[currentStepIndex].id,
+          answer,
+          isCorrect,
+          timeSpent: 1, // Placeholder for actual time tracking
+          attempts: 1, // Placeholder for attempt tracking
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to save progress');
+      
+      const updatedTeam: Team = await response.json();
+      setTeam(updatedTeam);
+
+      if (isCorrect) {
+        // Move to next step or next puzzle
+        const currentPuzzleDetails = puzzlesData.puzzles[team.currentPuzzle - 1];
+        if (currentPuzzleDetails && currentStepIndex < currentPuzzleDetails.steps.length - 1) {
+          setCurrentStepIndex(currentStepIndex + 1);
+        } else {
+          // Puzzle complete, server should have updated team.currentPuzzle
+          alert('Puzzle Complete!');
+          setCurrentStepIndex(0); // Reset for next puzzle
+        }
+      } else {
+        alert('Incorrect. Try again.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error saving progress.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('murder-mystery-active-team-id');
+    router.push('/');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
+        <Loader2 className="w-16 h-16 animate-spin text-amber-500" />
+        <p className="mt-4 text-lg">Loading your investigation...</p>
+      </div>
+    );
+  }
+
+  if (!team) {
+    // This state should ideally not be reached due to the redirect, but it's good practice.
+    return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
+            <p>No active team found. Redirecting to registration...</p>
+        </div>
+    )
+  }
+  
+  const currentPuzzle = puzzlesData.puzzles[team.currentPuzzle - 1];
+  const PuzzleComponent = puzzleComponentMap[currentPuzzle?.id];
+
   return (
-    <div className="min-h-screen bg-slate-900">
-      {/* Header */}
-      <header className="bg-slate-800/80 border-b border-slate-700 p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="text-slate-400">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold text-amber-100">Murder Mystery Investigation</h1>
-              <p className="text-sm text-slate-400">Stasiun Manggarai Railway Station</p>
+    <div className="min-h-screen bg-slate-900 text-white p-4">
+      <header className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-amber-100">{team.name}</h1>
+          <p className="text-slate-400">Investigation in Progress</p>
+        </div>
+        <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-slate-400" />
+                <span>{/* Timer component will go here */}</span>
             </div>
-          </div>
-          
-          <Badge variant="outline" className="text-green-400 border-green-400">
-            Phase 2: 4/6 Puzzles Complete! 🎉
-          </Badge>
+            <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="w-4 h-4 mr-2" />
+                End Session
+            </Button>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Main Investigation Briefing */}
-        <Card className="puzzle-container mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl text-amber-100 flex items-center gap-3">
-              <Sparkles className="w-6 h-6 text-amber-500" />
-              Phase 2: Advanced Interactive Investigation
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-green-200 mb-4 flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5" />
-                  Major Milestone Achieved!
-                </h3>
-                <p className="text-green-100 leading-relaxed mb-4">
-                  <strong className="text-green-200">Phase 2 Status:</strong> We've successfully implemented 
-                  4 out of 6 enhanced puzzles with sophisticated interactive components including drag & drop 
-                  systems, interactive cipher wheels, text analysis, and timeline construction.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-green-200">✅ Completed Puzzles:</h4>
-                    <ul className="text-green-100 space-y-1 text-sm">
-                      <li>• Train Schedule Investigation (3 interactive steps)</li>
-                      <li>• Lost Luggage Cipher (drag & drop + cipher wheel)</li>
-                      <li>• Station Environment Riddle (SVG map + 360° viewer)</li>
-                      <li>• Witness Statement Analysis (text + timeline)</li>
-                    </ul>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-green-200">🔄 Next Priority:</h4>
-                    <ul className="text-green-100 space-y-1 text-sm">
-                      <li>• CCTV Image Analysis (canvas + enhancement)</li>
-                      <li>• Mathematical Schedule Analysis (calculations)</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+      <main className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Sidebar - Suspects & Evidence */}
+        <aside className="lg:col-span-1 space-y-6">
+          <Tabs defaultValue="suspects" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="suspects"><Users className="w-4 h-4 mr-2"/>Suspects</TabsTrigger>
+              <TabsTrigger value="evidence"><FileText className="w-4 h-4 mr-2"/>Evidence</TabsTrigger>
+            </TabsList>
+            <TabsContent value="suspects">
+              <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                  <CardTitle>Suspect Profiles</CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-[60vh] overflow-y-auto">
+                  <Accordion type="single" collapsible>
+                    {suspectsData.suspects.map(suspect => (
+                      <AccordionItem value={suspect.id} key={suspect.id}>
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-3">
+                            <Image src={`/images/suspects/${suspect.imageUrl}`} alt={suspect.name} width={40} height={40} className="rounded-full" />
+                            {suspect.name}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <p className="text-sm text-slate-300">{suspect.backstory}</p>
+                          <p className="text-xs text-slate-400 mt-2">Occupation: {suspect.occupation}</p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="evidence">
+              <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                  <CardTitle>Evidence Board</CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-[60vh] overflow-y-auto grid grid-cols-2 gap-4">
+                  {evidenceData.evidence.map(item => (
+                    <div key={item.id} className="group relative">
+                        <Image src={`/images/evidence/${item.imageUrl}`} alt={item.name} width={150} height={150} className="rounded-lg object-cover" />
+                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p className="text-xs text-center p-2">{item.name}</p>
+                        </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </aside>
 
-              <div className="text-center">
-                <Button 
-                  size="lg"
-                  className="bg-amber-500 text-slate-900 hover:bg-amber-400 text-lg px-8 py-3"
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Experience Advanced Puzzles
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Main Content - Puzzle Area */}
+        <main className="lg:col-span-2">
+           <Card className="h-full bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                    <CardTitle className="text-amber-100">{currentPuzzle?.title || "Investigation Hub"}</CardTitle>
+                    <CardDescription>{currentPuzzle?.description || "Select a puzzle to begin."}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {PuzzleComponent ? (
+                      <PuzzleComponent
+                        step={currentPuzzle.steps[currentStepIndex]} 
+                        onStepComplete={handleStepComplete}
+                        onComplete={handleStepComplete}
+                        onHintUsed={() => console.log('Hint used')}
+                      />
+                    ) : (
+                      <div className="text-center p-8">
+                          <p>Could not load puzzle. Please check configuration.</p>
+                      </div>
+                    )}
+                </CardContent>
+           </Card>
+        </main>
 
-        {/* Advanced Puzzle Showcase */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Train Schedule Investigation */}
-          <Card className="bg-slate-800/60 border-slate-700 border-green-500/30">
-            <CardHeader>
-              <CardTitle className="text-amber-100 flex items-center gap-3">
-                <Train className="w-6 h-6 text-amber-500" />
-                Train Schedule Investigation
-              </CardTitle>
-              <Badge className="bg-green-500/20 text-green-200 border-green-500 w-fit">
-                ✓ Complete - 3 Steps
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Platform identification with CCTV analysis</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Interactive schedule analysis with time calculations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Searchable passenger manifest database</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
-                  <div className="text-xs text-slate-400 mb-2">Sample Evidence:</div>
-                  <div className="text-sm text-blue-400">19:45 Bekasi - Delayed 10 min</div>
-                  <div className="text-xs text-slate-300 mt-1">
-                    "Pak Rahman saw the victim checking his watch repeatedly..."
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Lost Luggage Cipher */}
-          <Card className="bg-slate-800/60 border-slate-700 border-green-500/30">
-            <CardHeader>
-              <CardTitle className="text-amber-100 flex items-center gap-3">
-                <Puzzle className="w-6 h-6 text-amber-500" />
-                Lost Luggage Cipher
-                <Sparkles className="w-4 h-4 text-amber-400" />
-              </CardTitle>
-              <Badge className="bg-green-500/20 text-green-200 border-green-500 w-fit">
-                ✓ Complete - Advanced Interactions
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Drag & drop luggage tag assembly</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Interactive Caesar cipher wheel rotation</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Evidence locker access with 4-digit OTP</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
-                  <div className="text-xs text-slate-400 mb-2">Decoded Message:</div>
-                  <div className="font-mono text-green-300 text-sm">MEET AT STORE ROOM</div>
-                  <div className="text-xs text-slate-300 mt-1">
-                    Access Code: <span className="font-mono">2015</span> (20:15 military time)
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Station Environment Riddle */}
-          <Card className="bg-slate-800/60 border-slate-700 border-green-500/30">
-            <CardHeader>
-              <CardTitle className="text-amber-100 flex items-center gap-3">
-                <Lock className="w-6 h-6 text-amber-500" />
-                Station Environment Riddle
-              </CardTitle>
-              <Badge className="bg-green-500/20 text-green-200 border-green-500 w-fit">
-                ✓ Complete - SVG Map + 360°
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Interactive riddle solving system</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">SVG station map with clickable depot areas</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">360° panoramic evidence discovery</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
-                  <div className="text-xs text-slate-400 mb-2">Riddle Solution:</div>
-                  <div className="text-sm text-purple-400">Train Maintenance Depot A</div>
-                  <div className="text-xs text-slate-300 mt-1">
-                    Evidence Found: <span className="text-red-400">Bloodstained wrench</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Witness Statement Analysis */}
-          <Card className="bg-slate-800/60 border-slate-700 border-green-500/30">
-            <CardHeader>
-              <CardTitle className="text-amber-100 flex items-center gap-3">
-                <Users className="w-6 h-6 text-amber-500" />
-                Witness Statement Analysis
-                <Sparkles className="w-4 h-4 text-amber-400" />
-              </CardTitle>
-              <Badge className="bg-green-500/20 text-green-200 border-green-500 w-fit">
-                ✓ Complete - Text Analysis + Timeline
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Interactive text highlighting system</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Evidence cross-referencing with CCTV logs</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Timeline construction with contradiction detection</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
-                  <div className="text-xs text-slate-400 mb-2">Key Finding:</div>
-                  <div className="text-sm text-red-400">Rahman's alibi contradiction</div>
-                  <div className="text-xs text-slate-300 mt-1">
-                    Time Gap: <span className="font-mono">20:15-20:25</span> (near storage area)
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Interactive Features Demo */}
-        <Card className="puzzle-container mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl text-amber-100 flex items-center gap-3">
-              <Move className="w-5 h-5 text-amber-500" />
-              Advanced Interactive Features
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center space-y-3">
-                <div className="w-16 h-16 mx-auto bg-slate-700 rounded-full flex items-center justify-center">
-                  <Move className="w-8 h-8 text-amber-500" />
-                </div>
-                <h4 className="font-semibold text-amber-100">Drag & Drop</h4>
-                <p className="text-sm text-slate-300">
-                  Interactive luggage tag assembly with @dnd-kit/sortable, 
-                  real-time validation, and smooth animations.
-                </p>
-              </div>
-
-              <div className="text-center space-y-3">
-                <div className="w-16 h-16 mx-auto bg-slate-700 rounded-full flex items-center justify-center">
-                  <RotateCcw className="w-8 h-8 text-amber-500" />
-                </div>
-                <h4 className="font-semibold text-amber-100">Cipher Wheel</h4>
-                <p className="text-sm text-slate-300">
-                  CSS transform-based rotation with live Caesar cipher decoding 
-                  and mathematical shift calculations.
-                </p>
-              </div>
-
-              <div className="text-center space-y-3">
-                <div className="w-16 h-16 mx-auto bg-slate-700 rounded-full flex items-center justify-center">
-                  <Lock className="w-8 h-8 text-amber-500" />
-                </div>
-                <h4 className="font-semibold text-amber-100">Security Access</h4>
-                <p className="text-sm text-slate-300">
-                  Professional OTP input system with time-based validation 
-                  and secure access panel interface.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Coming Next */}
-        <Card className="puzzle-container">
-          <CardHeader>
-            <CardTitle className="text-xl text-amber-100 flex items-center gap-3">
-              <Zap className="w-5 h-5 text-amber-500" />
-              Coming Next in Phase 2
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
-                  <h4 className="font-semibold text-amber-100 mb-3 flex items-center gap-2">
-                    <Zap className="w-4 h-4" />
-                    Station Environment Riddle
-                  </h4>
-                  <ul className="text-slate-300 space-y-2 text-sm">
-                    <li>• Interactive riddle solving system</li>
-                    <li>• SVG station map with clickable hotspots</li>
-                    <li>• Three.js 360° crime scene exploration</li>
-                    <li>• Multi-step evidence discovery flow</li>
-                  </ul>
-                </div>
-
-                <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
-                  <h4 className="font-semibold text-amber-100 mb-3 flex items-center gap-2">
-                    <Zap className="w-4 h-4" />
-                    Remaining Enhancements
-                  </h4>
-                  <ul className="text-slate-300 space-y-2 text-sm">
-                    <li>• Witness statement text highlighting</li>
-                    <li>• Interactive timeline construction</li>
-                    <li>• CCTV image enhancement tools</li>
-                    <li>• Mathematical analysis widgets</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <div className="inline-flex items-center gap-4 bg-slate-800/60 border border-slate-700 rounded-lg p-4">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">4/6</div>
-                    <div className="text-xs text-slate-400">Complete</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">67%</div>
-                    <div className="text-xs text-slate-400">Progress</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">12</div>
-                    <div className="text-xs text-slate-400">Steps Built</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">800+</div>
-                    <div className="text-xs text-slate-400">Lines Code</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Button 
-                  size="lg"
-                  className="bg-amber-500 text-slate-900 hover:bg-amber-400 text-lg px-8 py-3"
-                >
-                  Continue Building Phase 2
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Right Sidebar - Clues & Map */}
+        <aside className="lg:col-span-1 space-y-6">
+            <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                    <CardTitle>Discovered Clues</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-slate-400 text-sm">No clues discovered yet.</p>
+                </CardContent>
+            </Card>
+            <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                    <CardTitle>Station Map</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Image src="/images/stations/manggarai-station-map.svg" alt="Station Map" width={500} height={300} className="rounded-lg bg-slate-700 p-2" />
+                </CardContent>
+            </Card>
+        </aside>
+      </main>
     </div>
-  )
-} 
+  );
+};
+
+export default GameDashboard;
