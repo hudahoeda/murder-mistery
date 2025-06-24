@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { Team, Puzzle, PuzzleStep, ValidationRule, CompletedPuzzle, SubmissionResult } from '../types/game'
+import { Team, Puzzle, PuzzleStep, ValidationRule, CompletedPuzzle, SubmissionResult, CompletedStep } from '../types/game'
+import puzzles from '@/lib/data/puzzles.json';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -288,6 +289,21 @@ export function updateTeamProgress(
   // Update puzzle totals
   completedPuzzle.timeSpent += timeSpent
   completedPuzzle.attempts += attempts
+
+  // Check if the whole puzzle is complete
+  const puzzleData = puzzles.puzzles.find(p => p.id === puzzleId);
+  if (puzzleData && isCorrect && completedPuzzle.stepsCompleted.length === puzzleData.steps.length) {
+    // Check if all steps are correct
+    const allStepsCorrect = puzzleData.steps.every(step => 
+      completedPuzzle.stepsCompleted.find(cs => cs.stepId === step.id && cs.isCorrect)
+    );
+
+    if (allStepsCorrect) {
+      updatedTeam.currentPuzzle += 1;
+      // Optionally calculate final score for this puzzle
+      completedPuzzle.finalScore = calculatePuzzleScore(completedPuzzle.timeSpent, completedPuzzle.attempts, completedPuzzle.hintsUsed, puzzleData.difficulty);
+    }
+  }
   
   return updatedTeam
 }

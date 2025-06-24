@@ -18,9 +18,10 @@
           "content": {
             "question": "Based on the CCTV footage timestamp 19:45, which platform was the victim approaching?",
             "images": [
-              "/images/evidence/platform-1-sign.jpg",
-              "/images/evidence/platform-2-sign.jpg", 
-              "/images/evidence/platform-3-sign.jpg"
+              "/images/evidence/platform-1-sign.png",
+              "/images/evidence/platform-2-sign.png", 
+              "/images/evidence/platform-3-sign.png",
+              "/images/evidence/platform-4-sign.png"
             ],
             "options": [
               { "id": "platform-1", "text": "Platform 1 - Bogor Line", "correct": false },
@@ -104,7 +105,7 @@
               { "id": "piece-4", "content": "BEK", "position": { "x": 50, "y": 150 }, "targetPosition": { "x": 0, "y": 30 } },
               { "id": "piece-5", "content": "ASI", "position": { "x": 150, "y": 200 }, "targetPosition": { "x": 30, "y": 30 } }
             ],
-            "targetImage": "/images/evidence/luggage-tag-template.png",
+            "targetImage": "/images/evidence/luggage-tag-fragments.png",
             "tolerance": 15
           },
           "validation": {
@@ -220,7 +221,7 @@
           "type": "image-analysis",
           "timeEstimate": 5,
           "content": {
-            "panoramicImage": "/images/360/depot-a-panoramic.jpg",
+            "panoramicImage": "/images/360/depot-a-panoramic.svg",
             "hotspots": [
               { "id": "toolbox", "coordinates": [45, 60], "evidence": false },
               { "id": "workbench", "coordinates": [120, 45], "evidence": false },
@@ -350,7 +351,7 @@
           "type": "image-analysis",
           "timeEstimate": 10,
           "content": {
-            "originalImage": "/images/evidence/cctv-blurry-original.jpg",
+            "originalImage": "/images/evidence/cctv-blurry-original.png",
             "tools": [
               { "name": "brightness", "min": -50, "max": 50, "default": 0 },
               { "name": "contrast", "min": 0, "max": 200, "default": 100 },
@@ -378,12 +379,12 @@
           "type": "multiple-choice",
           "timeEstimate": 8,
           "content": {
-            "enhancedImage": "/images/evidence/cctv-enhanced.jpg",
+            "enhancedImage": "/images/evidence/cctv-enhanced-wrench.png",
             "brandDatabase": [
-              { "brand": "Stanley", "image": "/images/tools/stanley-wrench.jpg", "distinctive": "Yellow handle with black grip" },
-              { "brand": "Craftsman", "image": "/images/tools/craftsman-wrench.jpg", "distinctive": "Red handle with silver head" },
-              { "brand": "Tekiro", "image": "/images/tools/tekiro-wrench.jpg", "distinctive": "Blue handle with chrome finish" },
-              { "brand": "Krisbow", "image": "/images/tools/krisbow-wrench.jpg", "distinctive": "Green handle with black band" }
+              { "brand": "Stanley", "image": "/images/tools/stanley-wrench.png", "distinctive": "Yellow handle with black grip" },
+              { "brand": "Craftsman", "image": "/images/tools/craftsman-wrench.png", "distinctive": "Red handle with silver head" },
+              { "brand": "Tekiro", "image": "/images/tools/tekiro-wrench.png", "distinctive": "Blue handle with chrome finish" },
+              { "brand": "Krisbow", "image": "/images/tools/krisbow-wrench.png", "distinctive": "Green handle with black band" }
             ],
             "question": "Based on the visible handle color and design, which brand wrench is shown in the enhanced CCTV image?",
             "options": [

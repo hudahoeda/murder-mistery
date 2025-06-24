@@ -65,11 +65,11 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
     blur: 0
   }), []);
 
-  const brandDatabase: BrandInfo[] = [
-    { brand: "Stanley", image: "/images/tools/stanley-wrench.jpg", distinctive: "Yellow handle with black grip" },
-    { brand: "Craftsman", image: "/images/tools/craftsman-wrench.jpg", distinctive: "Red handle with silver head" },
-    { brand: "Tekiro", image: "/images/tools/tekiro-wrench.jpg", distinctive: "Blue handle with chrome finish" },
-    { brand: "Krisbow", image: "/images/tools/krisbow-wrench.jpg", distinctive: "Green handle with black band" }
+  const brandDatabase: BrandInfo[] = step.content?.brandDatabase || [
+    { brand: "Stanley", image: "/images/tools/stanley-wrench.png", distinctive: "Yellow handle with black grip" },
+    { brand: "Craftsman", image: "/images/tools/craftsman-wrench.png", distinctive: "Red handle with silver head" },
+    { brand: "Tekiro", image: "/images/tools/tekiro-wrench.png", distinctive: "Blue handle with chrome finish" },
+    { brand: "Krisbow", image: "/images/tools/krisbow-wrench.png", distinctive: "Green handle with black band" }
   ];
 
   const suspectTools: SuspectTool[] = [
@@ -96,16 +96,17 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
 
   const applyImageFilters = useCallback(() => {
     const canvas = canvasRef.current;
-    const originalImage = originalImageRef.current;
     
-    if (!canvas || !originalImage) return;
+    if (!canvas || !image) {
+      return;
+    }
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Set canvas size to match image
-    canvas.width = originalImage.naturalWidth;
-    canvas.height = originalImage.naturalHeight;
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
 
     // Apply filters using CSS filter style
     const filterString = [
@@ -116,16 +117,23 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
     ].join(' ');
 
     ctx.filter = filterString;
-    ctx.drawImage(originalImage, 0, 0);
+    ctx.drawImage(image, 0, 0);
     
     // Reset filter for future operations
     ctx.filter = 'none';
-  }, [imageSettings]);
+  }, [imageSettings, image]);
 
   useEffect(() => {
     applyImageFilters();
     checkImageEnhancement();
   }, [imageSettings, applyImageFilters, checkImageEnhancement]);
+
+  // Apply filters when image is loaded
+  useEffect(() => {
+    if (image) {
+      applyImageFilters();
+    }
+  }, [image, applyImageFilters]);
 
   useEffect(() => {
     const loadImage = () => {
@@ -133,17 +141,17 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        if (originalImageRef.current) {
-          originalImageRef.current = img;
-          applyImageFilters();
-          setImage(img);
-        }
+        setImage(img);
       };
-      // Using a placeholder image for demo - in real implementation this would be the actual CCTV image
-      img.src = '/images/evidence/cctv-platform2-timestamp.png';
+      img.onerror = (error) => {
+        console.error('❌ Failed to load image:', imagePath, error);
+      };
+      // Use the image path from step.content or fallback to existing image
+      const imagePath = step.content?.originalImage || '/images/evidence/cctv-platform2-timestamp.png';
+      img.src = imagePath;
     };
     loadImage();
-  }, [applyImageFilters]);
+  }, [step.content?.originalImage]);
 
   const validateStep1 = useCallback(() => {
     return checkImageEnhancement();
@@ -196,7 +204,7 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
             <div className="space-y-3">
               <h3 className="font-semibold text-sm">Original Footage</h3>
               <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                {image && (
+                {image ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -211,6 +219,10 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
                       Camera 7 - 20:12:43
                     </Badge>
                   </>
+                ) : (
+                  <div className="w-full h-64 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                    <span className="text-gray-500">Loading image...</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -330,9 +342,17 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
                   <Badge variant="outline">Reference</Badge>
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-800 rounded p-3 h-32 flex items-center justify-center">
-                  <span className="text-gray-500 text-sm">
-                    [{brand.brand} Wrench Image]
-                  </span>
+                  {brand.image ? (
+                    <img 
+                      src={brand.image} 
+                      alt={`${brand.brand} wrench`}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-gray-500 text-sm">
+                      [{brand.brand} Wrench Image]
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600">{brand.distinctive}</p>
               </div>
@@ -351,10 +371,20 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
         <CardContent>
           <div className="mb-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
             <h4 className="font-medium mb-2">Enhanced Image Analysis</h4>
-            <p className="text-sm text-gray-600">
-              The enhanced CCTV footage clearly shows a wrench with a distinctive blue handle and chrome finish. 
-              The grip pattern and color are consistent with professional-grade tools.
-            </p>
+            {step.content?.enhancedImage ? (
+              <div className="mb-3">
+                <img 
+                  src={step.content.enhancedImage} 
+                  alt="Enhanced CCTV footage"
+                  className="max-w-full h-auto rounded border"
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">
+                The enhanced CCTV footage clearly shows a wrench with a distinctive blue handle and chrome finish. 
+                The grip pattern and color are consistent with professional-grade tools.
+              </p>
+            )}
           </div>
 
           <RadioGroup value={selectedBrand} onValueChange={setSelectedBrand}>

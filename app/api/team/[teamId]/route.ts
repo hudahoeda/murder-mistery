@@ -18,8 +18,10 @@ const rehydrateTeam = (redisData: Record<string, string>): Team => {
 };
 
 export async function GET(request: Request, { params }: any) {
+  const resolvedParams = await params;
+  const teamId = resolvedParams.teamId as string;
+  
   try {
-    const teamId = params.teamId as string;
     if (!teamId) {
       return NextResponse.json({ error: 'Team ID is required' }, { status: 400 });
     }
@@ -39,7 +41,7 @@ export async function GET(request: Request, { params }: any) {
 
     return NextResponse.json(team, { status: 200 });
   } catch (error) {
-    console.error(`Failed to fetch team ${params.teamId}:`, error);
+    console.error(`Failed to fetch team ${teamId}:`, error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 } 

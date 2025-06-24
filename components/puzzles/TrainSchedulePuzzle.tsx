@@ -19,6 +19,15 @@ interface TrainSchedulePuzzleProps {
   className?: string
 }
 
+interface PlatformData {
+  id: string
+  name: string
+  description: string
+  timeVisible: string
+  crowdLevel: string
+  image?: string
+}
+
 // Step 1: Platform Identification Component
 const PlatformIdentificationStep = ({ step, onStepComplete }: TrainSchedulePuzzleProps) => {
   const [selectedPlatform, setSelectedPlatform] = useState("")
@@ -30,7 +39,40 @@ const PlatformIdentificationStep = ({ step, onStepComplete }: TrainSchedulePuzzl
     onStepComplete(selectedPlatform, isCorrect)
   }
 
-  const platformImages = [
+  const platformImages: PlatformData[] = step.content?.images ? [
+    {
+      id: "platform-1",
+      name: "Platform 1 - Bogor Line",
+      description: "Main platform with overhead digital displays",
+      timeVisible: "19:30 Bogor - On Time",
+      crowdLevel: "Heavy",
+      image: step.content.images[0]
+    },
+    {
+      id: "platform-2", 
+      name: "Platform 2 - Bekasi Line",
+      description: "Side platform with delayed train announcement",
+      timeVisible: "19:45 Bekasi - Delayed 10 min",
+      crowdLevel: "Light",
+      image: step.content.images[1]
+    },
+    {
+      id: "platform-3",
+      name: "Platform 3 - Serpong Line", 
+      description: "Underground platform with standard signage",
+      timeVisible: "19:50 Serpong - On Time",
+      crowdLevel: "Moderate",
+      image: step.content.images[2]
+    },
+    {
+      id: "platform-4",
+      name: "Platform 4 - Tanah Abang Line",
+      description: "Express platform with cancellation notice",
+      timeVisible: "20:00 Tanah Abang - Cancelled",
+      crowdLevel: "None",
+      image: step.content.images[3]
+    }
+  ] : [
     {
       id: "platform-1",
       name: "Platform 1 - Bogor Line",
@@ -97,7 +139,15 @@ const PlatformIdentificationStep = ({ step, onStepComplete }: TrainSchedulePuzzl
                     <CardContent className="p-4">
                       <div className="space-y-2">
                         <div className="aspect-video bg-slate-700 rounded border flex items-center justify-center">
-                          <span className="text-slate-400 text-sm">Platform Image</span>
+                          {platform.image ? (
+                            <img 
+                              src={platform.image} 
+                              alt={`${platform.name} sign`}
+                              className="max-w-full max-h-full object-contain rounded"
+                            />
+                          ) : (
+                            <span className="text-slate-400 text-sm">Platform Image</span>
+                          )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-slate-300">{platform.description}</p>

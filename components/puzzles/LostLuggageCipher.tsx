@@ -35,6 +35,12 @@ interface LostLuggageCipherProps {
   className?: string
 }
 
+interface PuzzlePiece {
+  id: string
+  content: string
+  position: number
+}
+
 // Draggable piece component for luggage tag assembly
 interface SortableItemProps {
   id: string
@@ -82,13 +88,23 @@ const SortableItem = ({ id, content, isPlaced }: SortableItemProps) => {
 
 // Step 1: Luggage Tag Assembly
 const LuggageTagAssemblyStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
-  const [pieces, setPieces] = useState([
+  const defaultPieces: PuzzlePiece[] = [
     { id: 'piece-1', content: 'LUG', position: 0 },
     { id: 'piece-2', content: 'GE-', position: 1 },
     { id: 'piece-3', content: '457', position: 2 },
     { id: 'piece-4', content: 'BEK', position: 3 },
     { id: 'piece-5', content: 'ASI', position: 4 }
-  ])
+  ]
+  
+  const [pieces, setPieces] = useState<PuzzlePiece[]>(
+    step.content?.pieces ? 
+      step.content.pieces.map((piece: any, index: number) => ({
+        id: piece.id || `piece-${index + 1}`,
+        content: piece.content || '',
+        position: index
+      })) : 
+      defaultPieces
+  )
   const [submitted, setSubmitted] = useState(false)
   
   const correctOrder = ['LUG', 'GE-', '457', 'BEK', 'ASI']
@@ -173,18 +189,39 @@ const LuggageTagAssemblyStep = ({ step, onStepComplete }: LostLuggageCipherProps
             <div>
               <h4 className="font-semibold text-amber-100 mb-3">Reconstructed Tag</h4>
               <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
-                <div className="aspect-[3/2] bg-slate-700 rounded border-2 border-dashed border-slate-500 flex items-center justify-center p-4">
-                  <div className="text-center">
-                    <div className="font-mono text-2xl font-bold text-amber-200 mb-2">
-                      {pieces.map(p => p.content).join('')}
+                {step.content?.targetImage ? (
+                  <div className="aspect-[3/2] bg-slate-700 rounded border-2 border-dashed border-slate-500 flex items-center justify-center p-4 relative">
+                    <img 
+                      src={step.content.targetImage} 
+                      alt="Luggage tag template"
+                      className="absolute inset-0 w-full h-full object-contain opacity-20"
+                      onError={(e) => console.error('❌ Luggage template failed:', step.content?.targetImage, e)}
+                    />
+                    <div className="text-center relative z-10">
+                      <div className="font-mono text-2xl font-bold text-amber-200 mb-2">
+                        {pieces.map(p => p.content).join('')}
+                      </div>
+                      {isCorrectOrder && (
+                        <Badge className="bg-green-500/20 text-green-200 border-green-500">
+                          ✓ Correctly Assembled
+                        </Badge>
+                      )}
                     </div>
-                    {isCorrectOrder && (
-                      <Badge className="bg-green-500/20 text-green-200 border-green-500">
-                        ✓ Correctly Assembled
-                      </Badge>
-                    )}
                   </div>
-                </div>
+                ) : (
+                  <div className="aspect-[3/2] bg-slate-700 rounded border-2 border-dashed border-slate-500 flex items-center justify-center p-4">
+                    <div className="text-center">
+                      <div className="font-mono text-2xl font-bold text-amber-200 mb-2">
+                        {pieces.map(p => p.content).join('')}
+                      </div>
+                      {isCorrectOrder && (
+                        <Badge className="bg-green-500/20 text-green-200 border-green-500">
+                          ✓ Correctly Assembled
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 {isCorrectOrder && (
                   <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded">
@@ -227,7 +264,7 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
   const [decodedText, setDecodedText] = useState('')
   const [submitted, setSubmitted] = useState(false)
   
-  const encryptedText = "PHHW DW VWRUH URRP"
+  const encryptedText = step.content?.encryptedText || "PHHW DW VWRUH URRP"
   
   const decodeCaesar = (text: string, shiftAmount: number) => {
     return text.split('').map(char => {

@@ -38,7 +38,7 @@ export default function RootLayout({
         <div className="relative min-h-screen">
           {/* Film noir atmospheric background */}
           <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 opacity-90 -z-10" />
-          <div className="fixed inset-0 bg-[url('/images/station-texture.png')] opacity-5 -z-10" />
+          <div className="fixed inset-0 bg-[url('https://media.istockphoto.com/id/475888448/photo/generic-abstract-of-old-subway-wall-with-blue-tiles.jpg?s=612x612&w=0&k=20&c=9djQJbT5yVBAaTgXUxRaEbnlGQPRZAR3k7TeBf3sBgk=')] opacity-5 -z-10" />
           
           {/* Main content */}
           <main className="relative z-10">

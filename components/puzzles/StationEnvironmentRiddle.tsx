@@ -146,57 +146,92 @@ const StationMapStep = ({ step, onStepComplete }: StationEnvironmentRiddleProps)
         </p>
 
         <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
-          <svg
-            viewBox="0 0 500 400"
-            className="w-full h-80 border rounded-lg bg-white dark:bg-slate-900"
-          >
-            <rect width="500" height="400" fill="#f8fafc" className="dark:fill-slate-900" />
-            
-            <line x1="50" y1="100" x2="450" y2="100" stroke="#64748b" strokeWidth="4" />
-            <line x1="50" y1="120" x2="450" y2="120" stroke="#64748b" strokeWidth="4" />
-            
-            <rect x="60" y="80" width="380" height="60" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
-            <text x="250" y="115" textAnchor="middle" className="text-sm fill-slate-600 dark:fill-slate-400">
-              Main Platform Area
-            </text>
-
-            {depotAreas.map((depot) => (
-              <g key={depot.id}>
-                <rect
-                  x={depot.coordinates[0] - 40}
-                  y={depot.coordinates[1] - 25}
-                  width="80"
-                  height="50"
-                  fill={selectedDepot === depot.id ? "#3b82f6" : "#cbd5e1"}
-                  stroke={selectedDepot === depot.id ? "#1d4ed8" : "#64748b"}
-                  strokeWidth="2"
-                  className="cursor-pointer hover:fill-blue-200 transition-colors"
+          {step.content?.mapImage ? (
+            <div className="w-full h-80 border rounded-lg bg-white dark:bg-slate-900 relative overflow-hidden">
+              <img 
+                src={step.content.mapImage} 
+                alt="Station map"
+                className="w-full h-full object-contain"
+                onError={(e) => console.error('❌ Station map failed:', step.content?.mapImage, e)}
+              />
+              {/* Interactive depot areas overlay */}
+              {depotAreas.map((depot) => (
+                <div
+                  key={depot.id}
+                  className={`absolute cursor-pointer transition-all duration-200 ${
+                    selectedDepot === depot.id ? 'bg-blue-500/30' : 'bg-gray-500/20 hover:bg-blue-300/20'
+                  }`}
+                  style={{
+                    left: `${(depot.coordinates[0] / 500) * 100}%`,
+                    top: `${(depot.coordinates[1] / 400) * 100}%`,
+                    width: '80px',
+                    height: '50px',
+                    transform: 'translate(-50%, -50%)',
+                    border: selectedDepot === depot.id ? '2px solid #3b82f6' : '1px solid #64748b',
+                    borderRadius: '4px'
+                  }}
                   onClick={() => setSelectedDepot(depot.id)}
-                />
-                <text
-                  x={depot.coordinates[0]}
-                  y={depot.coordinates[1] - 5}
-                  textAnchor="middle"
-                  className="text-xs fill-slate-700 dark:fill-slate-300 pointer-events-none"
+                  title={`${depot.label} - ${depot.description}`}
                 >
-                  {depot.label}
-                </text>
-                <text
-                  x={depot.coordinates[0]}
-                  y={depot.coordinates[1] + 10}
-                  textAnchor="middle"
-                  className="text-xs fill-slate-500 dark:fill-slate-400 pointer-events-none"
-                >
-                  {depot.description.split(' ')[0]} {depot.description.split(' ')[1]}
-                </text>
-              </g>
-            ))}
+                  <div className="text-xs text-center pt-1 font-semibold text-slate-700 dark:text-slate-200">
+                    {depot.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <svg
+              viewBox="0 0 500 400"
+              className="w-full h-80 border rounded-lg bg-white dark:bg-slate-900"
+            >
+              <rect width="500" height="400" fill="#f8fafc" className="dark:fill-slate-900" />
+              
+              <line x1="50" y1="100" x2="450" y2="100" stroke="#64748b" strokeWidth="4" />
+              <line x1="50" y1="120" x2="450" y2="120" stroke="#64748b" strokeWidth="4" />
+              
+              <rect x="60" y="80" width="380" height="60" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
+              <text x="250" y="115" textAnchor="middle" className="text-sm fill-slate-600 dark:fill-slate-400">
+                Main Platform Area
+              </text>
 
-            <rect x="150" y="300" width="200" height="80" fill="#f1f5f9" stroke="#64748b" strokeWidth="1" />
-            <text x="250" y="345" textAnchor="middle" className="text-sm fill-slate-600 dark:fill-slate-400">
-              Main Station Building
-            </text>
-          </svg>
+              {depotAreas.map((depot) => (
+                <g key={depot.id}>
+                  <rect
+                    x={depot.coordinates[0] - 40}
+                    y={depot.coordinates[1] - 25}
+                    width="80"
+                    height="50"
+                    fill={selectedDepot === depot.id ? "#3b82f6" : "#cbd5e1"}
+                    stroke={selectedDepot === depot.id ? "#1d4ed8" : "#64748b"}
+                    strokeWidth="2"
+                    className="cursor-pointer hover:fill-blue-200 transition-colors"
+                    onClick={() => setSelectedDepot(depot.id)}
+                  />
+                  <text
+                    x={depot.coordinates[0]}
+                    y={depot.coordinates[1] - 5}
+                    textAnchor="middle"
+                    className="text-xs fill-slate-700 dark:fill-slate-300 pointer-events-none"
+                  >
+                    {depot.label}
+                  </text>
+                  <text
+                    x={depot.coordinates[0]}
+                    y={depot.coordinates[1] + 10}
+                    textAnchor="middle"
+                    className="text-xs fill-slate-500 dark:fill-slate-400 pointer-events-none"
+                  >
+                    {depot.description.split(' ')[0]} {depot.description.split(' ')[1]}
+                  </text>
+                </g>
+              ))}
+
+              <rect x="150" y="300" width="200" height="80" fill="#f1f5f9" stroke="#64748b" strokeWidth="1" />
+              <text x="250" y="345" textAnchor="middle" className="text-sm fill-slate-600 dark:fill-slate-400">
+                Main Station Building
+              </text>
+            </svg>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -314,23 +349,31 @@ const EvidenceDiscoveryStep = ({ step, onStepComplete }: StationEnvironmentRiddl
           <div
             className="relative h-80 cursor-crosshair"
             onClick={handlePanoramicClick}
-            style={{
+            style={step.content?.panoramicImage ? {
+              backgroundImage: `url(${step.content.panoramicImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: `${panoramicRotation}% center`,
+              backgroundRepeat: 'repeat-x',
+              transition: 'background-position 0.5s ease'
+            } : {
               backgroundImage: 'linear-gradient(45deg, #1e293b 0%, #475569 50%, #1e293b 100%)',
               backgroundSize: '200% 100%',
               backgroundPosition: `${panoramicRotation}% center`,
               transition: 'background-position 0.5s ease'
             }}
           >
-            <div className="absolute inset-0 opacity-60">
-              <div 
-                className="absolute bottom-0 left-0 w-16 h-20 bg-slate-700 rounded-t-lg"
-                style={{ transform: `translateX(${(panoramicRotation * 2) % 100}px)` }}
-              />
-              <div 
-                className="absolute bottom-0 right-0 w-12 h-24 bg-slate-600 rounded-t-lg"
-                style={{ transform: `translateX(${-(panoramicRotation * 1.5) % 80}px)` }}
-              />
-            </div>
+            {!step.content?.panoramicImage && (
+              <div className="absolute inset-0 opacity-60">
+                <div 
+                  className="absolute bottom-0 left-0 w-16 h-20 bg-slate-700 rounded-t-lg"
+                  style={{ transform: `translateX(${(panoramicRotation * 2) % 100}px)` }}
+                />
+                <div 
+                  className="absolute bottom-0 right-0 w-12 h-24 bg-slate-600 rounded-t-lg"
+                  style={{ transform: `translateX(${-(panoramicRotation * 1.5) % 80}px)` }}
+                />
+              </div>
+            )}
 
             {panoramicHotspots.map((hotspot) => {
               const adjustedX = (hotspot.coordinates[0] + (panoramicRotation / 10)) % 100;

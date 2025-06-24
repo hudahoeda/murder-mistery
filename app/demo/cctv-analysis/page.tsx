@@ -20,11 +20,17 @@ export default function CCTVAnalysisDemoPage() {
   const [puzzleCompleted, setPuzzleCompleted] = useState(false);
 
   useEffect(() => {
-    const cctvPuzzle = (puzzlesData.puzzles as any as PuzzleType[]).find(p => p.id === 'cctv-image-analysis');
-    if (cctvPuzzle) {
-      setPuzzle(cctvPuzzle);
-      setCurrentStep(cctvPuzzle.steps[0]);
+    // More robust puzzle finding with better error handling
+    const allPuzzles = puzzlesData?.puzzles || [];
+    const cctvPuzzle = allPuzzles.find((p: any) => p.id === 'cctv-image-analysis');
+    
+    if (cctvPuzzle && cctvPuzzle.steps && cctvPuzzle.steps.length > 0) {
+      setPuzzle(cctvPuzzle as PuzzleType);
+      setCurrentStep(cctvPuzzle.steps[0] as PuzzleStep);
       setStepIndex(0);
+    } else {
+      console.error('❌ CCTV puzzle not found or invalid structure!');
+      console.error('Available puzzle IDs:', allPuzzles.map((p: any) => p.id));
     }
   }, []);
 

@@ -1,0 +1,57 @@
+<svg viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Station Background -->
+  <rect x="0" y="0" width="500" height="300" fill="#ecf0f1" stroke="#34495e" stroke-width="2"/>
+  
+  <!-- Railway Tracks -->
+  <line x1="0" y1="100" x2="500" y2="100" stroke="#34495e" stroke-width="3" fill="none"/>
+  <line x1="0" y1="200" x2="500" y2="200" stroke="#34495e" stroke-width="3" fill="none"/>
+  
+  <!-- Platform -->
+  <rect x="50" y="110" width="400" height="80" fill="#95a5a6" stroke="#34495e" stroke-width="2" rx="5"/>
+  
+  <!-- Station Building -->
+  <rect x="200" y="30" width="100" height="60" fill="#34495e" rx="5"/>
+  <text x="250" y="65" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial, sans-serif">MANGGARAI</text>
+  
+  <!-- Depot A - Morning Shift (coordinates: 100, 150) -->
+  <g id="depot-a" class="depot-area" style="cursor: pointer;">
+    <rect x="70" y="220" width="80" height="60" fill="#f39c12" stroke="#e67e22" stroke-width="2" rx="8"/>
+    <text x="110" y="240" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="Arial, sans-serif">DEPOT A</text>
+    <text x="110" y="255" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Morning</text>
+    <text x="110" y="270" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Shift</text>
+  </g>
+  
+  <!-- Depot B - Evening Shift (coordinates: 200, 150) -->
+  <g id="depot-b" class="depot-area" style="cursor: pointer;">
+    <rect x="170" y="220" width="80" height="60" fill="#e74c3c" stroke="#c0392b" stroke-width="2" rx="8"/>
+    <text x="210" y="240" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="Arial, sans-serif">DEPOT B</text>
+    <text x="210" y="255" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Evening</text>
+    <text x="210" y="270" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Shift</text>
+  </g>
+  
+  <!-- Depot C - Night Shift (coordinates: 300, 150) -->
+  <g id="depot-c" class="depot-area" style="cursor: pointer;">
+    <rect x="270" y="220" width="80" height="60" fill="#9b59b6" stroke="#8e44ad" stroke-width="2" rx="8"/>
+    <text x="310" y="240" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="Arial, sans-serif">DEPOT C</text>
+    <text x="310" y="255" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Night</text>
+    <text x="310" y="270" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Shift</text>
+  </g>
+  
+  <!-- Depot D - Maintenance Only (coordinates: 400, 150) -->
+  <g id="depot-d" class="depot-area" style="cursor: pointer;">
+    <rect x="370" y="220" width="80" height="60" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2" rx="8"/>
+    <text x="410" y="240" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="Arial, sans-serif">DEPOT D</text>
+    <text x="410" y="255" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Maintenance</text>
+    <text x="410" y="270" text-anchor="middle" fill="white" font-size="8" font-family="Arial, sans-serif">Only</text>
+  </g>
+  
+  <!-- Decorative Sun -->
+  <circle cx="450" cy="50" r="15" fill="#f1c40f"/>
+  <text x="450" y="55" text-anchor="middle" fill="#f39c12" font-size="12" font-family="Arial, sans-serif">☀</text>
+  
+  <!-- Interactive Areas (invisible clickable zones matching your coordinates) -->
+  <circle cx="100" cy="150" r="40" fill="transparent" id="area-depot-a" style="cursor: pointer;"/>
+  <circle cx="200" cy="150" r="40" fill="transparent" id="area-depot-b" style="cursor: pointer;"/>
+  <circle cx="300" cy="150" r="40" fill="transparent" id="area-depot-c" style="cursor: pointer;"/>
+  <circle cx="400" cy="150" r="40" fill="transparent" id="area-depot-d" style="cursor: pointer;"/>
+</svg>

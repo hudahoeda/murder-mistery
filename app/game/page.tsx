@@ -13,6 +13,8 @@ import { Clock, Users, FileText, Map, LogOut, Loader2 } from 'lucide-react';
 import puzzlesData from '@/lib/data/puzzles.json';
 import suspectsData from '@/lib/data/suspects.json';
 import evidenceData from '@/lib/data/evidence.json';
+import cluesData from '@/lib/data/clues.json';
+import { Clue } from '@/lib/types/game';
 
 // Import all puzzle components
 import { TrainSchedulePuzzle } from '@/components/puzzles/TrainSchedulePuzzle';
@@ -21,6 +23,7 @@ import { StationEnvironmentRiddle } from '@/components/puzzles/StationEnvironmen
 import WitnessStatementAnalysis from '@/components/puzzles/WitnessStatementAnalysis';
 import CCTVImageAnalysis from '@/components/puzzles/CCTVImageAnalysis';
 import MathematicalScheduleAnalysis from '@/components/puzzles/MathematicalScheduleAnalysis';
+import { Timer } from '@/components/game/Timer';
 
 const puzzleComponentMap: { [key: string]: React.FC<any> } = {
   'train-schedule-investigation': TrainSchedulePuzzle,
@@ -98,6 +101,13 @@ const GameDashboard = () => {
           alert('Puzzle Complete!');
           setCurrentStepIndex(0); // Reset for next puzzle
         }
+        
+        // Check for new clues
+        const revealedClues = checkForNewClues(updatedTeam);
+        if (revealedClues.length > 0) {
+            alert(`New clue(s) discovered: ${revealedClues.map(c => c.title).join(', ')}`);
+        }
+
       } else {
         alert('Incorrect. Try again.');
       }
@@ -111,6 +121,46 @@ const GameDashboard = () => {
     localStorage.removeItem('murder-mystery-active-team-id');
     router.push('/');
   };
+
+  const checkForNewClues = (updatedTeam: Team): Clue[] => {
+    const newlyRevealed: Clue[] = [];
+    (cluesData.clues as any[]).forEach(clue => {
+      // If clue is already discovered, skip it
+      if (updatedTeam.discoveredClues.includes(clue.id)) {
+        return;
+      }
+
+      // Check if this clue's puzzle is completed
+      const relevantPuzzleCompletion = updatedTeam.completedPuzzles.find(p => p.puzzleId === clue.revealCondition.puzzleId);
+      if (relevantPuzzleCompletion) {
+        // If stepId is defined, check if that specific step is complete and correct
+        if (clue.revealCondition.stepId) {
+          const stepIsComplete = relevantPuzzleCompletion.stepsCompleted.some(s => s.stepId === clue.revealCondition.stepId && s.isCorrect);
+          if (stepIsComplete) {
+            newlyRevealed.push(clue);
+          }
+        } else {
+          // If no stepId, clue is revealed by completing the puzzle
+          const puzzleData = puzzlesData.puzzles.find(p => p.id === clue.revealCondition.puzzleId);
+          if (puzzleData && relevantPuzzleCompletion.stepsCompleted.length === puzzleData.steps.length) {
+             const allStepsCorrect = puzzleData.steps.every(step => 
+                relevantPuzzleCompletion.stepsCompleted.find(cs => cs.stepId === step.id && cs.isCorrect)
+             );
+             if(allStepsCorrect) newlyRevealed.push(clue);
+          }
+        }
+      }
+    });
+    
+    if (newlyRevealed.length > 0) {
+        const newClueIds = newlyRevealed.map(c => c.id);
+        const updatedDiscoveredClues = [...updatedTeam.discoveredClues, ...newClueIds];
+        setTeam(prevTeam => prevTeam ? {...prevTeam, discoveredClues: updatedDiscoveredClues} : null);
+        // Here you would also make an API call to save the new clue discoveries to Redis
+    }
+    
+    return newlyRevealed;
+  }
 
   if (loading) {
     return (
@@ -143,7 +193,7 @@ const GameDashboard = () => {
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-slate-400" />
-                <span>{/* Timer component will go here */}</span>
+                <Timer startTime={team.gameStartTime} />
             </div>
             <Button onClick={handleLogout} variant="outline" size="sm">
                 <LogOut className="w-4 h-4 mr-2" />
@@ -171,7 +221,7 @@ const GameDashboard = () => {
                       <AccordionItem value={suspect.id} key={suspect.id}>
                         <AccordionTrigger>
                           <div className="flex items-center gap-3">
-                            <Image src={`/images/suspects/${suspect.imageUrl}`} alt={suspect.name} width={40} height={40} className="rounded-full" />
+                            <Image src={suspect.imageUrl} alt={suspect.name} width={40} height={40} className="rounded-full" />
                             {suspect.name}
                           </div>
                         </AccordionTrigger>
@@ -191,9 +241,9 @@ const GameDashboard = () => {
                   <CardTitle>Evidence Board</CardTitle>
                 </CardHeader>
                 <CardContent className="max-h-[60vh] overflow-y-auto grid grid-cols-2 gap-4">
-                  {evidenceData.evidence.map(item => (
+                  {(evidenceData.evidence as any[]).map(item => (
                     <div key={item.id} className="group relative">
-                        <Image src={`/images/evidence/${item.imageUrl}`} alt={item.name} width={150} height={150} className="rounded-lg object-cover" />
+                        <Image src={item.imageUrl} alt={item.name} width={150} height={150} className="rounded-lg object-cover" />
                         <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <p className="text-xs text-center p-2">{item.name}</p>
                         </div>
@@ -236,7 +286,16 @@ const GameDashboard = () => {
                     <CardTitle>Discovered Clues</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-slate-400 text-sm">No clues discovered yet.</p>
+                    {team.discoveredClues.length > 0 ? (
+                        <ul className="space-y-2">
+                            {team.discoveredClues.map(clueId => {
+                                const clue = (cluesData.clues as any[]).find(c => c.id === clueId);
+                                return <li key={clueId} className="text-sm text-amber-200">{clue?.title || 'Unknown Clue'}</li>
+                            })}
+                        </ul>
+                    ) : (
+                        <p className="text-slate-400 text-sm">No clues discovered yet.</p>
+                    )}
                 </CardContent>
             </Card>
             <Card className="bg-slate-800/60 border-slate-700">
@@ -244,7 +303,7 @@ const GameDashboard = () => {
                     <CardTitle>Station Map</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Image src="/images/stations/manggarai-station-map.svg" alt="Station Map" width={500} height={300} className="rounded-lg bg-slate-700 p-2" />
+                    <Image src="/images/station/manggarai-station-map.svg" alt="Station Map" width={500} height={300} className="rounded-lg bg-slate-700 p-2" />
                 </CardContent>
             </Card>
         </aside>

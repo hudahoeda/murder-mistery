@@ -67,12 +67,12 @@ export interface Clue {
   id: string;
   title: string;
   content: string;
-  category: 'suspect' | 'evidence' | 'timeline' | 'location' | 'method';
+  category: string;
+  importance: string;
   revealCondition: {
     puzzleId: string;
-    stepId?: string;
+    stepId: string;
   };
-  importance: 'critical' | 'important' | 'helpful' | 'background';
   relatedSuspects?: string[];
   relatedEvidence?: string[];
 }
