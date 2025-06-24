@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Play, Puzzle, Train, RotateCcw, Lock, Move, Sparkles, CheckCircle, Zap } from 'lucide-react'
+import { ArrowLeft, Play, Puzzle, Train, RotateCcw, Lock, Move, Sparkles, CheckCircle, Zap, Users } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Phase 2 Investigation - Murder Mystery at Stasiun Manggarai',
@@ -27,7 +27,7 @@ export default function GamePage() {
           </div>
           
           <Badge variant="outline" className="text-green-400 border-green-400">
-            Phase 2: 2/6 Puzzles Complete! 🎉
+            Phase 2: 4/6 Puzzles Complete! 🎉
           </Badge>
         </div>
       </header>
@@ -50,8 +50,8 @@ export default function GamePage() {
                 </h3>
                 <p className="text-green-100 leading-relaxed mb-4">
                   <strong className="text-green-200">Phase 2 Status:</strong> We've successfully implemented 
-                  2 out of 6 enhanced puzzles with sophisticated interactive components including drag & drop 
-                  systems, interactive cipher wheels, and multi-step progression.
+                  4 out of 6 enhanced puzzles with sophisticated interactive components including drag & drop 
+                  systems, interactive cipher wheels, text analysis, and timeline construction.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -59,13 +59,15 @@ export default function GamePage() {
                     <ul className="text-green-100 space-y-1 text-sm">
                       <li>• Train Schedule Investigation (3 interactive steps)</li>
                       <li>• Lost Luggage Cipher (drag & drop + cipher wheel)</li>
+                      <li>• Station Environment Riddle (SVG map + 360° viewer)</li>
+                      <li>• Witness Statement Analysis (text + timeline)</li>
                     </ul>
                   </div>
                   <div className="space-y-2">
                     <h4 className="font-semibold text-green-200">🔄 Next Priority:</h4>
                     <ul className="text-green-100 space-y-1 text-sm">
-                      <li>• Station Environment Riddle (SVG map + 360°)</li>
-                      <li>• Witness Statement Analysis (text + timeline)</li>
+                      <li>• CCTV Image Analysis (canvas + enhancement)</li>
+                      <li>• Mathematical Schedule Analysis (calculations)</li>
                     </ul>
                   </div>
                 </div>
@@ -85,7 +87,7 @@ export default function GamePage() {
         </Card>
 
         {/* Advanced Puzzle Showcase */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Train Schedule Investigation */}
           <Card className="bg-slate-800/60 border-slate-700 border-green-500/30">
             <CardHeader>
@@ -159,6 +161,85 @@ export default function GamePage() {
                   <div className="font-mono text-green-300 text-sm">MEET AT STORE ROOM</div>
                   <div className="text-xs text-slate-300 mt-1">
                     Access Code: <span className="font-mono">2015</span> (20:15 military time)
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Station Environment Riddle */}
+          <Card className="bg-slate-800/60 border-slate-700 border-green-500/30">
+            <CardHeader>
+              <CardTitle className="text-amber-100 flex items-center gap-3">
+                <Lock className="w-6 h-6 text-amber-500" />
+                Station Environment Riddle
+              </CardTitle>
+              <Badge className="bg-green-500/20 text-green-200 border-green-500 w-fit">
+                ✓ Complete - SVG Map + 360°
+              </Badge>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-slate-300">Interactive riddle solving system</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-slate-300">SVG station map with clickable depot areas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-slate-300">360° panoramic evidence discovery</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
+                  <div className="text-xs text-slate-400 mb-2">Riddle Solution:</div>
+                  <div className="text-sm text-purple-400">Train Maintenance Depot A</div>
+                  <div className="text-xs text-slate-300 mt-1">
+                    Evidence Found: <span className="text-red-400">Bloodstained wrench</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Witness Statement Analysis */}
+          <Card className="bg-slate-800/60 border-slate-700 border-green-500/30">
+            <CardHeader>
+              <CardTitle className="text-amber-100 flex items-center gap-3">
+                <Users className="w-6 h-6 text-amber-500" />
+                Witness Statement Analysis
+                <Sparkles className="w-4 h-4 text-amber-400" />
+              </CardTitle>
+              <Badge className="bg-green-500/20 text-green-200 border-green-500 w-fit">
+                ✓ Complete - Text Analysis + Timeline
+              </Badge>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-slate-300">Interactive text highlighting system</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-slate-300">Evidence cross-referencing with CCTV logs</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-slate-300">Timeline construction with contradiction detection</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
+                  <div className="text-xs text-slate-400 mb-2">Key Finding:</div>
+                  <div className="text-sm text-red-400">Rahman's alibi contradiction</div>
+                  <div className="text-xs text-slate-300 mt-1">
+                    Time Gap: <span className="font-mono">20:15-20:25</span> (near storage area)
                   </div>
                 </div>
               </div>
@@ -253,19 +334,19 @@ export default function GamePage() {
               <div className="text-center">
                 <div className="inline-flex items-center gap-4 bg-slate-800/60 border border-slate-700 rounded-lg p-4">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">2/6</div>
+                    <div className="text-lg font-bold text-amber-500">4/6</div>
                     <div className="text-xs text-slate-400">Complete</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">33%</div>
+                    <div className="text-lg font-bold text-amber-500">67%</div>
                     <div className="text-xs text-slate-400">Progress</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">9</div>
+                    <div className="text-lg font-bold text-amber-500">12</div>
                     <div className="text-xs text-slate-400">Steps Built</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-amber-500">527</div>
+                    <div className="text-lg font-bold text-amber-500">800+</div>
                     <div className="text-xs text-slate-400">Lines Code</div>
                   </div>
                 </div>
