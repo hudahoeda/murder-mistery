@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Play, Train, Puzzle, Lock, Users, Move, RotateCcw, Eye, Calendar, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Play, Train, Puzzle, Lock, Users, Move, RotateCcw, Eye, Calendar, CheckCircle, Camera, Settings, Search, Calculator, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ export default function DemoPage() {
           </div>
           
           <Badge variant="outline" className="text-green-400 border-green-400">
-            4/6 Puzzles Complete 🎉
+            6/6 Puzzles Complete! 🎉
           </Badge>
         </div>
       </header>
@@ -39,9 +39,9 @@ export default function DemoPage() {
         {/* Demo Overview */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl text-amber-100 flex items-center gap-3">
+                          <CardTitle className="text-2xl text-amber-100 flex items-center gap-3">
               <Play className="w-6 h-6 text-amber-500" />
-              Phase 2 Interactive Puzzle Collection
+              Complete Interactive Puzzle Collection - Phase 2 FINISHED!
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -56,6 +56,8 @@ export default function DemoPage() {
                       <li>• Interactive Caesar cipher wheel</li>
                       <li>• SVG station map with hotspots</li>
                       <li>• Text highlighting & timeline construction</li>
+                      <li>• Canvas-based image enhancement tools</li>
+                      <li>• Mathematical calculations & statistical analysis</li>
                     </ul>
                   </div>
                   <div className="space-y-2">
@@ -288,6 +290,110 @@ export default function DemoPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* CCTV Image Analysis Demo - NEW! */}
+          <Card className="bg-slate-800/60 border-slate-700 hover:border-amber-500/50 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-amber-100 flex items-center gap-3">
+                <Camera className="w-6 h-6 text-amber-500" />
+                CCTV Image Analysis
+              </CardTitle>
+              <div className="flex gap-2">
+                <Badge className="bg-green-500/20 text-green-200 border-green-500">
+                  ✓ Complete
+                </Badge>
+                <Badge className="bg-blue-500/20 text-blue-200 border-blue-500">
+                  Canvas + AI
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-slate-300 text-sm">
+                  Advanced image enhancement with Canvas-based processing, brand identification database, and ownership correlation.
+                </p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Settings className="w-3 h-3" />
+                    Canvas image processing with real-time filters
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Search className="w-3 h-3" />
+                    Brand recognition and matching system
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Users className="w-3 h-3" />
+                    Suspect tool inventory correlation
+                  </div>
+                </div>
+
+                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
+                  <div className="text-xs text-slate-400 mb-1">Key Features:</div>
+                  <div className="text-sm text-blue-400">Canvas filters, slider controls, image analysis</div>
+                </div>
+
+                <Button asChild className="w-full bg-amber-500 text-slate-900 hover:bg-amber-400">
+                  <Link href="/demo/cctv-analysis">
+                    <Play className="w-4 h-4 mr-2" />
+                    Test CCTV Analysis Demo
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Mathematical Schedule Analysis Demo - NEW! */}
+          <Card className="bg-slate-800/60 border-slate-700 hover:border-amber-500/50 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-amber-100 flex items-center gap-3">
+                <Calculator className="w-6 h-6 text-amber-500" />
+                Mathematical Schedule Analysis
+              </CardTitle>
+              <div className="flex gap-2">
+                <Badge className="bg-green-500/20 text-green-200 border-green-500">
+                  ✓ Complete
+                </Badge>
+                <Badge className="bg-purple-500/20 text-purple-200 border-purple-500">
+                  Calculations
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-slate-300 text-sm">
+                  Advanced mathematical analysis with schedule calculations, staff correlation, and passenger flow anomaly detection.
+                </p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Calendar className="w-3 h-3" />
+                    Train schedule conflict calculations
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Users className="w-3 h-3" />
+                    Staff duty roster correlation analysis
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <TrendingUp className="w-3 h-3" />
+                    Statistical passenger flow anomalies
+                  </div>
+                </div>
+
+                <div className="bg-slate-700/30 border border-slate-600 rounded p-3">
+                  <div className="text-xs text-slate-400 mb-1">Key Features:</div>
+                  <div className="text-sm text-purple-400">Time calculations, data analysis, statistics</div>
+                </div>
+
+                <Button asChild className="w-full bg-amber-500 text-slate-900 hover:bg-amber-400">
+                  <Link href="/demo/mathematical-analysis">
+                    <Play className="w-4 h-4 mr-2" />
+                    Test Mathematical Analysis Demo
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Development Status */}
@@ -298,26 +404,26 @@ export default function DemoPage() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">4/6</div>
+                <div className="text-2xl font-bold text-green-400">6/6</div>
                 <div className="text-sm text-slate-400">Puzzles Complete</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">12</div>
+                <div className="text-2xl font-bold text-blue-400">18</div>
                 <div className="text-sm text-slate-400">Interactive Steps</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">800+</div>
+                <div className="text-2xl font-bold text-purple-400">1200+</div>
                 <div className="text-sm text-slate-400">Lines of Code</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-amber-400">67%</div>
-                <div className="text-sm text-slate-400">Phase 2 Progress</div>
+                <div className="text-2xl font-bold text-amber-400">100%</div>
+                <div className="text-sm text-slate-400">Phase 2 Complete!</div>
               </div>
             </div>
             
-            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-blue-200 text-sm">
-                <strong>Next Steps:</strong> CCTV Image Analysis (Canvas-based enhancement) and Mathematical Schedule Analysis (calculations + statistics) to complete Phase 2.
+            <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <p className="text-green-200 text-sm">
+                <strong>Phase 2 Complete! 🎉</strong> All 6 interactive puzzles implemented with advanced features including Canvas image processing, mathematical calculations, statistical analysis, and complex multi-step progressions. Ready for Phase 3: Team Management & Admin Dashboard.
               </p>
             </div>
           </CardContent>

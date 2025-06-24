@@ -128,24 +128,24 @@ const WitnessStatementAnalysis: React.FC<WitnessStatementAnalysisProps> = ({
     }
   };
 
-  const highlightKeyInfo = () => {
-    let highlighted = witnessStatement;
-    
-    // Highlight times
-    highlighted = highlighted.replace(/(\d{1,2}:\d{2}\s*PM)/g, '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>');
-    
-    // Highlight locations
-    highlighted = highlighted.replace(/(ticket counters|upper level offices|information desk)/g, '<mark class="bg-blue-200 dark:bg-blue-800">$1</mark>');
-    
-    // Highlight names
-    highlighted = highlighted.replace(/(Pak Budi|Agus)/g, '<mark class="bg-green-200 dark:bg-green-800">$1</mark>');
-    
-    setHighlightedText(highlighted);
-  };
-
   useEffect(() => {
+    const highlightKeyInfo = () => {
+      let highlighted = witnessStatement;
+      
+      // Highlight times
+      highlighted = highlighted.replace(/(\d{1,2}:\d{2}\s*PM)/g, '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>');
+      
+      // Highlight locations
+      highlighted = highlighted.replace(/(ticket counters|upper level offices|information desk)/g, '<mark class="bg-blue-200 dark:bg-blue-800">$1</mark>');
+      
+      // Highlight names
+      highlighted = highlighted.replace(/(Pak Budi|Agus)/g, '<mark class="bg-green-200 dark:bg-green-800">$1</mark>');
+      
+      setHighlightedText(highlighted);
+    };
+
     highlightKeyInfo();
-  }, []);
+  }, [witnessStatement]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
