@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import getRedisClient from '@/lib/redis';
 import { updateTeamProgress } from '@/lib/utils/gameUtils';
-import { Team } from '@/lib/types/game';
+import { Team, CompletedPuzzle, CompletedStep } from '@/lib/types/game';
 import cluesData from '@/lib/data/clues.json';
 import puzzlesData from '@/lib/data/puzzles.json';
 
@@ -23,8 +23,9 @@ const rehydrateTeam = (redisData: Record<string, string>): Team => {
       name: redisData.name,
       members: JSON.parse(redisData.members),
       currentPuzzle: parseInt(redisData.currentPuzzle, 10),
-      completedPuzzles: JSON.parse(redisData.completedPuzzles),
-      discoveredClues: JSON.parse(redisData.discoveredClues),
+      completedPuzzles: redisData.completedPuzzles ? JSON.parse(redisData.completedPuzzles) : [],
+      discoveredClues: redisData.discoveredClues ? JSON.parse(redisData.discoveredClues) : [],
+      discoveredEvidence: redisData.discoveredEvidence ? JSON.parse(redisData.discoveredEvidence) : [],
       gameStartTime: new Date(redisData.gameStartTime),
       totalScore: parseInt(redisData.totalScore, 10),
       isActive: redisData.isActive === 'true',
@@ -121,8 +122,11 @@ export async function POST(request: Request, { params }: any) {
           members: JSON.stringify(currentTeam.members),
           completedPuzzles: JSON.stringify(currentTeam.completedPuzzles),
           discoveredClues: JSON.stringify(currentTeam.discoveredClues),
+          discoveredEvidence: JSON.stringify(currentTeam.discoveredEvidence || []),
           gameStartTime: currentTeam.gameStartTime.toISOString(),
-          isActive: currentTeam.isActive.toString()
+          isActive: currentTeam.isActive.toString(),
+          currentPuzzle: currentTeam.currentPuzzle,
+          totalScore: currentTeam.totalScore
       };
 
       await redis.hSet(`team:${currentTeam.id}`, teamForRedis);
@@ -153,8 +157,11 @@ export async function POST(request: Request, { params }: any) {
         members: JSON.stringify(updatedTeam.members),
         completedPuzzles: JSON.stringify(updatedTeam.completedPuzzles),
         discoveredClues: JSON.stringify(updatedTeam.discoveredClues),
+        discoveredEvidence: JSON.stringify(updatedTeam.discoveredEvidence || []),
         gameStartTime: updatedTeam.gameStartTime.toISOString(),
-        isActive: updatedTeam.isActive.toString()
+        isActive: updatedTeam.isActive.toString(),
+        currentPuzzle: updatedTeam.currentPuzzle,
+        totalScore: updatedTeam.totalScore
     };
 
     await redis.hSet(`team:${updatedTeam.id}`, teamForRedis);

@@ -12,10 +12,12 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Clock, Train, Search, CheckCircle, AlertCircle } from 'lucide-react'
 import { PuzzleStep } from '@/lib/types/game'
 import { validateAnswer } from '@/lib/utils/gameUtils'
+import Image from 'next/image'
 
 interface TrainSchedulePuzzleProps {
   step: PuzzleStep
   onStepComplete: (answer: any, isCorrect: boolean) => void
+  onHintUsed?: () => void
   className?: string
 }
 
@@ -121,6 +123,20 @@ const PlatformIdentificationStep = ({ step, onStepComplete }: TrainSchedulePuzzl
               which platform was the victim approaching? Look carefully at the electronic departure 
               board visible in the background.
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {step.content.images.map((img: string, index: number) => (
+              <div key={index} className="border rounded-lg p-2 bg-slate-800">
+                <Image
+                  src={img}
+                  alt={`Platform signage ${index + 1}`}
+                  width={400}
+                  height={200}
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            ))}
           </div>
 
           <RadioGroup value={selectedPlatform} onValueChange={setSelectedPlatform}>
@@ -422,7 +438,7 @@ const PassengerManifestStep = ({ step, onStepComplete }: TrainSchedulePuzzleProp
 }
 
 // Main puzzle component that renders the appropriate step
-export const TrainSchedulePuzzle = ({ step, onStepComplete, className }: TrainSchedulePuzzleProps) => {
+export const TrainSchedulePuzzle = ({ step, onStepComplete, onHintUsed, className }: TrainSchedulePuzzleProps) => {
   switch (step.id) {
     case 'platform-identification':
       return <PlatformIdentificationStep step={step} onStepComplete={onStepComplete} />

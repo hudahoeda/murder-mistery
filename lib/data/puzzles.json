@@ -121,17 +121,17 @@
           "type": "cipher",
           "timeEstimate": 8,
           "content": {
-            "encryptedText": "PHHW DW VWRUH URRP",
+            "encryptedText": "CUUJ QJ IJEHQWU HEEC",
             "cipherType": "caesar",
             "alphabetSize": 26,
-            "hint": "The shift value is the same as the luggage number's last digit"
+            "hint": "The shift value can be found by adding the three numbers from the luggage tag"
           },
           "validation": {
             "type": "exact",
-            "value": "MEET AT STORE ROOM",
+            "value": "MEET AT STORAGE ROOM",
             "caseSensitive": false
           },
-          "hintText": "Remember the luggage number from the previous step: 457. What's the last digit?"
+          "hintText": "Add the three numbers from the luggage tag: 4 + 5 + 7 = ?"
         },
         {
           "id": "evidence-locker-access",

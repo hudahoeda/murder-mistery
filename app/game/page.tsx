@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Image from 'next/image';
-import { Clock, Users, FileText, Map, LogOut, Loader2, HelpCircle } from 'lucide-react';
+import { Clock, Users, FileText, Map, LogOut, Loader2, HelpCircle, Lock, Copy, Check } from 'lucide-react';
 import puzzlesData from '@/lib/data/puzzles.json';
 import suspectsData from '@/lib/data/suspects.json';
 import evidenceData from '@/lib/data/evidence.json';
@@ -26,6 +26,7 @@ import WitnessStatementAnalysis from '@/components/puzzles/WitnessStatementAnaly
 import CCTVImageAnalysis from '@/components/puzzles/CCTVImageAnalysis';
 import MathematicalScheduleAnalysis from '@/components/puzzles/MathematicalScheduleAnalysis';
 import { Timer } from '@/components/game/Timer';
+import { FinalAccusationForm } from '@/components/game/FinalAccusationForm';
 
 const puzzleComponentMap: { [key: string]: React.FC<any> } = {
   'train-schedule-investigation': TrainSchedulePuzzle,
@@ -46,7 +47,10 @@ const GameDashboard = () => {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [newClue, setNewClue] = useState<Clue | null>(null);
+  const [newEvidence, setNewEvidence] = useState<any>(null);
   const [progressUpdateLoading, setProgressUpdateLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isGameComplete, setIsGameComplete] = useState(false);
   const progressUpdateInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -91,6 +95,16 @@ const GameDashboard = () => {
       }
     };
   }, [router]);
+
+  useEffect(() => {
+    if (team) {
+      const progress = calculateOverallProgress();
+      if (progress >= 100) {
+        setIsGameComplete(true);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [team]);
 
   const handleStepComplete = async (answer: any, isCorrect: boolean) => {
     if (!team || !currentPuzzle || progressUpdateLoading) return;
@@ -139,11 +153,17 @@ const GameDashboard = () => {
           setShowHint(false);
         }
         
-        // Check for new clues
-        const revealedClues = checkForNewClues(updatedTeam);
-        if (revealedClues.length > 0) {
-          setNewClue(revealedClues[0]); // Show first new clue
+        // Check for new clues and evidence
+        const newlyRevealedClues = checkForNewItems(updatedTeam, 'clues');
+        if (newlyRevealedClues.length > 0) {
+          setNewClue(newlyRevealedClues[0]); // Show first new clue
           setTimeout(() => setNewClue(null), 5000); // Hide after 5 seconds
+        }
+
+        const newlyRevealedEvidence = checkForNewItems(updatedTeam, 'evidence');
+        if (newlyRevealedEvidence.length > 0) {
+          setNewEvidence(newlyRevealedEvidence[0]); // Show first new evidence
+          setTimeout(() => setNewEvidence(null), 5000); // Hide after 5 seconds
         }
       } else {
         setStepAttempts(attempts);
@@ -184,41 +204,69 @@ const GameDashboard = () => {
     router.push('/');
   };
 
-  const checkForNewClues = (updatedTeam: Team): Clue[] => {
-    const newlyRevealed: Clue[] = [];
-    (cluesData.clues as any[]).forEach(clue => {
-      // If clue is already discovered, skip it
-      if (updatedTeam.discoveredClues.includes(clue.id)) {
+  const handleCopyId = () => {
+    if (team?.id) {
+      navigator.clipboard.writeText(team.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleFinalAccusation = (suspectId: string) => {
+    const guiltySuspect = suspectsData.suspects.find(s => s.isGuilty);
+    if (guiltySuspect?.id === suspectId) {
+      alert(`Congratulations! You have correctly identified ${guiltySuspect.name} as the murderer. Case closed!`);
+    } else {
+      const incorrectSuspect = suspectsData.suspects.find(s => s.id === suspectId);
+      alert(`Incorrect. ${incorrectSuspect?.name || 'The accused'} is not the murderer. The case remains unsolved...`);
+    }
+    // Optional: Redirect or show a final score screen
+    router.push('/');
+  };
+
+  const checkForNewItems = (updatedTeam: Team, itemType: 'clues' | 'evidence'): any[] => {
+    const data = itemType === 'clues' ? cluesData.clues : evidenceData.evidence;
+    const discoveredItems = itemType === 'clues' ? updatedTeam.discoveredClues : updatedTeam.discoveredEvidence || [];
+    const newlyRevealed: any[] = [];
+
+    (data as any[]).forEach(item => {
+      // If item or its reveal condition is missing, or already discovered, skip it
+      if (!item || !item.revealCondition || discoveredItems.includes(item.id)) {
         return;
       }
 
-      // Check if this clue's puzzle is completed
-      const relevantPuzzleCompletion = updatedTeam.completedPuzzles.find(p => p.puzzleId === clue.revealCondition.puzzleId);
+      // Check if this item's puzzle is completed
+      const relevantPuzzleCompletion = updatedTeam.completedPuzzles.find(p => p.puzzleId === item.revealCondition.puzzleId);
       if (relevantPuzzleCompletion) {
         // If stepId is defined, check if that specific step is complete and correct
-        if (clue.revealCondition.stepId) {
-          const stepIsComplete = relevantPuzzleCompletion.stepsCompleted.some(s => s.stepId === clue.revealCondition.stepId && s.isCorrect);
+        if (item.revealCondition.stepId) {
+          const stepIsComplete = relevantPuzzleCompletion.stepsCompleted.some(s => s.stepId === item.revealCondition.stepId && s.isCorrect);
           if (stepIsComplete) {
-            newlyRevealed.push(clue);
+            newlyRevealed.push(item);
           }
         } else {
-          // If no stepId, clue is revealed by completing the puzzle
-          const puzzleData = puzzlesData.puzzles.find(p => p.id === clue.revealCondition.puzzleId);
+          // If no stepId, item is revealed by completing the puzzle
+          const puzzleData = puzzlesData.puzzles.find(p => p.id === item.revealCondition.puzzleId);
           if (puzzleData && relevantPuzzleCompletion.stepsCompleted.length === puzzleData.steps.length) {
              const allStepsCorrect = puzzleData.steps.every(step => 
                 relevantPuzzleCompletion.stepsCompleted.find(cs => cs.stepId === step.id && cs.isCorrect)
              );
-             if(allStepsCorrect) newlyRevealed.push(clue);
+             if(allStepsCorrect) newlyRevealed.push(item);
           }
         }
       }
     });
     
     if (newlyRevealed.length > 0) {
-        const newClueIds = newlyRevealed.map(c => c.id);
-        const updatedDiscoveredClues = [...updatedTeam.discoveredClues, ...newClueIds];
-        setTeam(prevTeam => prevTeam ? {...prevTeam, discoveredClues: updatedDiscoveredClues} : null);
-        // Here you would also make an API call to save the new clue discoveries to Redis
+        const newItemIds = newlyRevealed.map(c => c.id);
+        if (itemType === 'clues') {
+            const updatedDiscoveredClues = [...updatedTeam.discoveredClues, ...newItemIds];
+            setTeam(prevTeam => prevTeam ? {...prevTeam, discoveredClues: updatedDiscoveredClues} : null);
+        } else {
+            const updatedDiscoveredEvidence = [...(updatedTeam.discoveredEvidence || []), ...newItemIds];
+            setTeam(prevTeam => prevTeam ? {...prevTeam, discoveredEvidence: updatedDiscoveredEvidence} : null);
+        }
+        // Here you would also make an API call to save the new discoveries to Redis
     }
     
     return newlyRevealed;
@@ -271,6 +319,22 @@ const GameDashboard = () => {
         <div>
           <h1 className="text-2xl font-bold text-amber-100">{team.name}</h1>
           <p className="text-slate-400">Investigation in Progress</p>
+          {team && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs text-slate-500">Team ID:</span>
+              <code className="text-xs bg-slate-700 text-amber-200 px-2 py-1 rounded font-mono">
+                {team.id}
+              </code>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-slate-400 hover:text-white"
+                onClick={handleCopyId}
+              >
+                {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -309,6 +373,16 @@ const GameDashboard = () => {
           <HelpCircle className="h-4 w-4" />
           <AlertDescription>
             New clue discovered: <strong>{newClue.title}</strong>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* New Evidence Alert */}
+      {newEvidence && (
+        <Alert className="mb-4 bg-green-500/20 border-green-500 text-green-100">
+          <FileText className="h-4 w-4" />
+          <AlertDescription>
+            New evidence unlocked: <strong>{newEvidence.name}</strong>
           </AlertDescription>
         </Alert>
       )}
@@ -352,14 +426,23 @@ const GameDashboard = () => {
                   <CardTitle>Evidence Board</CardTitle>
                 </CardHeader>
                 <CardContent className="max-h-[60vh] overflow-y-auto grid grid-cols-2 gap-4">
-                  {(evidenceData.evidence as any[]).map(item => (
-                    <div key={item.id} className="group relative">
-                        <Image src={item.imageUrl} alt={item.name} width={150} height={150} className="rounded-lg object-cover" />
-                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <p className="text-xs text-center p-2">{item.name}</p>
-                        </div>
-                    </div>
-                  ))}
+                  {(evidenceData.evidence as any[]).map(item => {
+                    const isDiscovered = team.discoveredEvidence?.includes(item.id);
+                    return isDiscovered ? (
+                      <div key={item.id} className="group relative">
+                          <Image src={item.imageUrl} alt={item.name} width={150} height={150} className="rounded-lg object-cover" />
+                          <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <p className="text-xs text-center p-2">{item.name}</p>
+                          </div>
+                      </div>
+                    ) : (
+                      <div key={item.id} className="w-full h-[150px] bg-slate-700/50 rounded-lg flex flex-col items-center justify-center text-center p-2 border-2 border-dashed border-slate-600">
+                        <Lock className="w-6 h-6 text-slate-500 mb-2" />
+                        <p className="text-xs text-slate-500">Evidence Locked</p>
+                        <p className="text-xxs text-slate-600">Complete puzzles to reveal</p>
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -370,41 +453,56 @@ const GameDashboard = () => {
         <main className="lg:col-span-2">
            <Card className="h-full bg-slate-800/60 border-slate-700">
                 <CardHeader>
-                    <CardTitle className="text-amber-100">{currentPuzzle?.title || "Investigation Hub"}</CardTitle>
-                    <CardDescription>{currentPuzzle?.description || "Select a puzzle to begin."}</CardDescription>
-                    {currentPuzzle && (
-                      <div className="mt-4 flex gap-4 text-sm text-slate-400">
-                        <span>Step {currentStepIndex + 1} of {currentPuzzle.steps.length}</span>
-                        <span>•</span>
-                        <span>Attempts: {stepAttempts}</span>
-                        <span>•</span>
-                        <span>Hints Used: {hintsUsed}</span>
-                      </div>
-                    )}
+                  {isGameComplete ? (
+                    <>
+                      <CardTitle className="text-amber-100 text-2xl">Make Your Final Accusation</CardTitle>
+                      <CardDescription>The case is in your hands. Review the evidence and choose the killer.</CardDescription>
+                    </>
+                  ) : (
+                    <>
+                      <CardTitle className="text-amber-100">{currentPuzzle?.title || "Investigation Hub"}</CardTitle>
+                      <CardDescription>{currentPuzzle?.description || "Select a puzzle to begin."}</CardDescription>
+                      {currentPuzzle && (
+                        <div className="mt-4 flex gap-4 text-sm text-slate-400">
+                          <span>Step {currentStepIndex + 1} of {currentPuzzle.steps.length}</span>
+                          <span>•</span>
+                          <span>Attempts: {stepAttempts}</span>
+                          <span>•</span>
+                          <span>Hints Used: {hintsUsed}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </CardHeader>
                 <CardContent>
-                    {/* Hint Display */}
-                    {showHint && currentPuzzle && (
-                      <Alert className="mb-4 bg-blue-500/20 border-blue-500">
-                        <HelpCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Hint:</strong> {currentPuzzle.steps[currentStepIndex].hintText || "No hint available for this step."}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                  {isGameComplete ? (
+                    <FinalAccusationForm suspects={suspectsData.suspects} onSubmit={handleFinalAccusation} />
+                  ) : (
+                    <>
+                      {/* Hint Display */}
+                      {showHint && currentPuzzle && (
+                        <Alert className="mb-4 bg-blue-500/20 border-blue-500">
+                          <HelpCircle className="h-4 w-4" />
+                          <AlertDescription>
+                            <strong>Hint:</strong> {currentPuzzle.steps[currentStepIndex].hintText || "No hint available for this step."}
+                          </AlertDescription>
+                        </Alert>
+                      )}
 
-                    {PuzzleComponent ? (
-                      <PuzzleComponent
-                        step={currentPuzzle.steps[currentStepIndex]} 
-                        onStepComplete={handleStepComplete}
-                        onComplete={handleStepComplete}
-                        onHintUsed={handleHintUsed}
-                      />
-                    ) : (
-                      <div className="text-center p-8">
-                          <p>Could not load puzzle. Please check configuration.</p>
-                      </div>
-                    )}
+                      {PuzzleComponent ? (
+                        <PuzzleComponent
+                          key={`${currentPuzzle.id}-${currentStepIndex}-${stepAttempts}`}
+                          step={currentPuzzle.steps[currentStepIndex]}
+                          onStepComplete={handleStepComplete}
+                          onHintUsed={handleHintUsed}
+                        />
+                      ) : (
+                        <div className="text-center p-8">
+                            <p>Could not load puzzle. Please check configuration.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </CardContent>
            </Card>
         </main>
@@ -417,18 +515,19 @@ const GameDashboard = () => {
                 </CardHeader>
                 <CardContent>
                     {team.discoveredClues.length > 0 ? (
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                             {team.discoveredClues.map(clueId => {
                                 const clue = (cluesData.clues as any[]).find(c => c.id === clueId);
                                 return clue ? (
-                                  <li key={clueId} className="text-sm text-amber-200">
-                                    <strong>{clue.title}:</strong> {clue.description}
+                                  <li key={clueId} className="text-sm text-slate-300 leading-relaxed">
+                                    <strong className="text-amber-200 block">{clue.title}</strong>
+                                    {clue.content}
                                   </li>
                                 ) : null;
                             })}
                         </ul>
                     ) : (
-                        <p className="text-slate-400 text-sm">No clues discovered yet.</p>
+                        <p className="text-slate-400 text-sm italic">No clues discovered yet.</p>
                     )}
                 </CardContent>
             </Card>

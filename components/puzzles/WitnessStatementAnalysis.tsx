@@ -47,7 +47,18 @@ const WitnessStatementAnalysis: React.FC<WitnessStatementAnalysisProps> = ({
   const [selectedContradiction, setSelectedContradiction] = useState('');
   const [timelineAnswer, setTimelineAnswer] = useState('');
   const [showHint, setShowHint] = useState(false);
-  const [highlightedText, setHighlightedText] = useState<string>('');
+
+  useEffect(() => {
+    setExtractedInfo({
+      patrolStart: '',
+      victimLocation: '',
+      officesCheck: '',
+      discoveryLocation: '',
+    });
+    setSelectedContradiction('');
+    setTimelineAnswer('');
+    setShowHint(false);
+  }, [step]);
 
   const witnessStatement: string = step.content.statement;
   const timelineEvents: TimelineEvent[] = step.content.events;
@@ -86,19 +97,6 @@ const WitnessStatementAnalysis: React.FC<WitnessStatementAnalysisProps> = ({
     onStepComplete(answer, isCorrect);
   };
 
-  useEffect(() => {
-    const highlightKeyInfo = () => {
-      let highlighted = witnessStatement;
-      highlighted = highlighted.replace(/(\d{1,2}:\d{2}\s*PM)/g, '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>');
-      highlighted = highlighted.replace(/(ticket counters|upper level offices|information desk)/g, '<mark class="bg-blue-200 dark:bg-blue-800">$1</mark>');
-      highlighted = highlighted.replace(/(Pak Budi|Agus)/g, '<mark class="bg-green-200 dark:bg-green-800">$1</mark>');
-      setHighlightedText(highlighted);
-    };
-    if (witnessStatement) {
-        highlightKeyInfo();
-    }
-  }, [witnessStatement]);
-
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="p-4 border rounded-lg bg-slate-50 dark:bg-slate-800">
@@ -106,10 +104,9 @@ const WitnessStatementAnalysis: React.FC<WitnessStatementAnalysisProps> = ({
           <FileText className="w-5 h-5 text-blue-600" />
           Rahman's Security Statement
         </h3>
-        <div 
-          className="text-sm leading-relaxed font-mono"
-          dangerouslySetInnerHTML={{ __html: highlightedText }}
-        />
+        <p className="text-sm leading-relaxed font-mono">
+          {witnessStatement}
+        </p>
       </div>
       <Card>
         <CardHeader>
@@ -121,7 +118,7 @@ const WitnessStatementAnalysis: React.FC<WitnessStatementAnalysisProps> = ({
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="patrol-start">What time did Rahman start his patrol?</Label>
-            <Input id="patrol-start" value={extractedInfo.patrolStart} onChange={(e) => setExtractedInfo(prev => ({ ...prev, patrolStart: e.target.value }))} placeholder="e.g., 7:15 PM" />
+            <Input id="patrol-start" value={extractedInfo.patrolStart} onChange={(e) => setExtractedInfo(prev => ({ ...prev, patrolStart: e.target.value }))} placeholder="Enter time (e.g., H:MM PM)" />
           </div>
           <div>
             <Label htmlFor="victim-location">Where did Rahman see the victim?</Label>
@@ -129,7 +126,7 @@ const WitnessStatementAnalysis: React.FC<WitnessStatementAnalysisProps> = ({
           </div>
           <div>
             <Label htmlFor="offices-check">What time did Rahman check the upper level offices?</Label>
-            <Input id="offices-check" value={extractedInfo.officesCheck} onChange={(e) => setExtractedInfo(prev => ({ ...prev, officesCheck: e.target.value }))} placeholder="e.g., 8:00 PM" />
+            <Input id="offices-check" value={extractedInfo.officesCheck} onChange={(e) => setExtractedInfo(prev => ({ ...prev, officesCheck: e.target.value }))} placeholder="Enter time (e.g., H:MM PM)" />
           </div>
           <div>
             <Label htmlFor="discovery-location">Where was Rahman when the body was discovered?</Label>
@@ -231,7 +228,7 @@ const WitnessStatementAnalysis: React.FC<WitnessStatementAnalysisProps> = ({
               <Label htmlFor="timeline-answer">
                 Enter the time range when Rahman was near the storage area:
               </Label>
-              <Input id="timeline-answer" value={timelineAnswer} onChange={(e) => setTimelineAnswer(e.target.value)} placeholder="e.g., 20:15-20:25 or 8:15-8:25 PM" />
+              <Input id="timeline-answer" value={timelineAnswer} onChange={(e) => setTimelineAnswer(e.target.value)} placeholder="Enter time range (e.g., HH:MM-HH:MM)" />
             </div>
           </div>
         </CardContent>

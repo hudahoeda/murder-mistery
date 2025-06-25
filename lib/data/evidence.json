@@ -10,7 +10,8 @@
       "importance": "critical",
       "relatedSuspects": ["rahman-security", "agus-maintenance"],
       "imageUrl": "/images/evidence/bloodstained-wrench.png",
-      "analysisResults": "Blood type matches victim. Fingerprints partially smudged but show traces consistent with work gloves. Tool serial number matches maintenance department inventory."
+      "analysisResults": "Blood type matches victim. Fingerprints partially smudged but show traces consistent with work gloves. Tool serial number matches maintenance department inventory.",
+      "revealCondition": { "puzzleId": "station-environment-riddle", "stepId": "evidence-discovery-360" }
     },
     {
       "id": "luggage-tag-cipher",
@@ -22,7 +23,8 @@
       "importance": "critical",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/luggage-tag-fragments.png",
-      "analysisResults": "Caesar cipher with shift of 7. Decoded message: 'MEET AT STORE ROOM'. Handwriting analysis pending."
+      "analysisResults": "Caesar cipher with shift of 7. Decoded message: 'MEET AT STORE ROOM'. Handwriting analysis pending.",
+      "revealCondition": { "puzzleId": "lost-luggage-cipher", "stepId": "luggage-tag-assembly" }
     },
     {
       "id": "cctv-footage-platform-2",
@@ -34,7 +36,8 @@
       "importance": "important",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/cctv-platform2-timestamp.png",
-      "analysisResults": "Victim visible at 19:47, 19:52. Shows frustrated body language. No clear view of interactions with other individuals."
+      "analysisResults": "Victim visible at 19:47, 19:52. Shows frustrated body language. No clear view of interactions with other individuals.",
+      "revealCondition": { "puzzleId": "cctv-image-analysis", "stepId": "image-enhancement" }
     },
     {
       "id": "cctv-enhanced-footage",
@@ -58,7 +61,8 @@
       "importance": "critical",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/keycard-log-screen.png",
-      "analysisResults": "Timestamp: 20:18:34. Card ID: RS-001 (Rahman Pratama). Access granted to Storage Room B-7."
+      "analysisResults": "Timestamp: 20:18:34. Card ID: RS-001 (Rahman Pratama). Access granted to Storage Room B-7.",
+      "revealCondition": { "puzzleId": "mathematical-schedule-analysis", "stepId": "staff-schedule-correlation" }
     },
     {
       "id": "train-schedule-board",
@@ -94,7 +98,8 @@
       "importance": "important",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/maya-witness-statement.png",
-      "analysisResults": "Handwritten statement, signed and dated. Maya appeared nervous but consistent in her account. No obvious motive to lie."
+      "analysisResults": "Handwritten statement, signed and dated. Maya appeared nervous but consistent in her account. No obvious motive to lie.",
+      "revealCondition": { "puzzleId": "witness-statement-analysis", "stepId": "alibi-verification" }
     },
     {
       "id": "maintenance-tool-inventory",
@@ -142,7 +147,8 @@
       "importance": "important",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/victim-phone-messages.png",
-      "analysisResults": "Last message sent at 20:12: 'Meet me at the usual place. We need to discuss your findings.' Sent to Rahman Pratama's number."
+      "analysisResults": "Last message sent at 20:12: 'Meet me at the usual place. We need to discuss your findings.' Sent to Rahman Pratama's number.",
+      "revealCondition": { "puzzleId": "lost-luggage-cipher", "stepId": "caesar-cipher-decoding" }
     }
   ]
 } 

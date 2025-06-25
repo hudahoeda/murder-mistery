@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,11 +32,11 @@ interface StaffSchedule {
   location: string;
 }
 
-interface PassengerData {
-  timeSlot: string;
-  expectedCount: number;
-  actualCount: number;
-  variance: number;
+interface PassengerCountData {
+  time: string;
+  arrivals: number;
+  departures: number;
+  platform_2: number;
 }
 
 const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> = ({
@@ -49,9 +49,16 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
   const [anomalyAnswer, setAnomalyAnswer] = useState('');
   const [showHint, setShowHint] = useState(false);
 
+  useEffect(() => {
+    setTimeCalculationAnswer('');
+    setSelectedStaff('');
+    setAnomalyAnswer('');
+    setShowHint(false);
+  }, [step]);
+
   const trainSchedule: TrainSchedule[] = step.content.schedule;
   const staffSchedules: StaffSchedule[] = step.content.staffSchedules;
-  const passengerFlowData: PassengerData[] = step.content.passengerData;
+  const passengerFlowData: PassengerCountData[] = step.content.passengerData || [];
 
   const validateStep1 = () => {
     return timeCalculationAnswer === step.validation.value;
@@ -62,8 +69,8 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
   };
 
   const validateStep3 = () => {
-    // Using includes for flexibility with format
-    return (step.validation.value as string[]).some(val => anomalyAnswer.includes(val));
+    const answerAsNumber = parseInt(anomalyAnswer, 10);
+    return !isNaN(answerAsNumber) && answerAsNumber === step.validation.value;
   };
 
   const handleStepSubmit = () => {
@@ -193,7 +200,7 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
               id="time-calc"
               value={timeCalculationAnswer}
               onChange={(e) => setTimeCalculationAnswer(e.target.value)}
-              placeholder="e.g., 20:05 or 8:05 PM"
+              placeholder="Enter time in HH:MM format"
               className="mt-2"
             />
           </div>
@@ -333,36 +340,24 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
+            <table className="w-full border-collapse border border-slate-300 dark:border-slate-600">
               <thead>
-                <tr className="bg-gray-50 dark:bg-gray-800">
-                  <th className="border border-gray-300 p-3 text-left">Time Slot</th>
-                  <th className="border border-gray-300 p-3 text-right">Expected Count</th>
-                  <th className="border border-gray-300 p-3 text-right">Actual Count</th>
-                  <th className="border border-gray-300 p-3 text-right">Variance (%)</th>
-                  <th className="border border-gray-300 p-3 text-center">Status</th>
+                <tr className="bg-slate-50 dark:bg-slate-800">
+                  <th className="border border-slate-300 dark:border-slate-600 p-3 text-left">Time Slot</th>
+                  <th className="border border-slate-300 dark:border-slate-600 p-3 text-right">Arrivals</th>
+                  <th className="border border-slate-300 dark:border-slate-600 p-3 text-right">Departures</th>
+                  <th className="border border-slate-300 dark:border-slate-600 p-3 text-right">Platform 2 Count</th>
                 </tr>
               </thead>
               <tbody>
-                {passengerFlowData.map((data: PassengerData, index: number) => {
-                  const isSignificant = Math.abs(data.variance) > 10;
+                {passengerFlowData.map((data: PassengerCountData, index: number) => {
+                  const isCriticalTime = data.time === '19:45' || data.time === '20:15';
                   return (
-                    <tr key={index} className={isSignificant ? 'bg-red-50 dark:bg-red-900/20' : ''}>
-                      <td className="border border-gray-300 p-3 font-mono">{data.timeSlot}</td>
-                      <td className="border border-gray-300 p-3 text-right">{data.expectedCount}</td>
-                      <td className="border border-gray-300 p-3 text-right font-semibold">{data.actualCount}</td>
-                      <td className="border border-gray-300 p-3 text-right font-mono">
-                        <span className={data.variance < 0 ? 'text-red-600' : 'text-green-600'}>
-                          {data.variance > 0 ? '+' : ''}{data.variance.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="border border-gray-300 p-3 text-center">
-                        {isSignificant ? (
-                          <Badge className="bg-red-100 text-red-800">Anomaly</Badge>
-                        ) : (
-                          <Badge variant="outline">Normal</Badge>
-                        )}
-                      </td>
+                    <tr key={index} className={isCriticalTime ? 'bg-amber-50 dark:bg-amber-900/20' : ''}>
+                      <td className="border border-slate-300 dark:border-slate-600 p-3 font-mono">{data.time}</td>
+                      <td className="border border-slate-300 dark:border-slate-600 p-3 text-right">{data.arrivals}</td>
+                      <td className="border border-slate-300 dark:border-slate-600 p-3 text-right">{data.departures}</td>
+                      <td className="border border-slate-300 dark:border-slate-600 p-3 text-right font-semibold">{data.platform_2}</td>
                     </tr>
                   );
                 })}
@@ -374,52 +369,29 @@ const MathematicalScheduleAnalysis: React.FC<MathematicalScheduleAnalysisProps> 
 
       <Card>
         <CardHeader>
-          <CardTitle>Anomaly Pattern Analysis</CardTitle>
+          <CardTitle>Passenger Anomaly Calculation</CardTitle>
           <CardDescription>
-            Identify the time period with the most significant passenger count anomalies
+            {step.content.question}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 rounded-lg">
-            <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Statistical Thresholds:</h4>
-            <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-              <li>• Normal variance: ±0% to ±5%</li>
-              <li>• Moderate anomaly: ±5% to ±10%</li>
-              <li>• Significant anomaly: &gt;10% (investigation required)</li>
-            </ul>
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-600 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              {step.content.context}
+            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Peak Anomaly Period</h4>
-              <p className="text-sm text-gray-600">
-                The data shows the highest negative variance occurred during the 19:45-20:00 slot (-17.5%), 
-                continuing into 20:00-20:15 (-14.1%). This suggests a significant disruption to normal passenger flow.
-              </p>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Potential Causes</h4>
-              <p className="text-sm text-gray-600">
-                Such dramatic passenger count drops typically indicate service disruptions, security incidents, 
-                or unusual events that deter or prevent normal station usage.
-              </p>
-            </div>
-          </div>
-
           <div>
             <Label htmlFor="anomaly-answer">
-              During which time range did the most significant passenger flow anomalies occur?
+              Enter your calculated percentage drop (rounded to the nearest whole number):
             </Label>
             <Input
               id="anomaly-answer"
+              type="number"
               value={anomalyAnswer}
               onChange={(e) => setAnomalyAnswer(e.target.value)}
-              placeholder="e.g., 19:45-20:15 or 7:45 PM - 8:15 PM"
+              placeholder="Enter calculated percentage"
               className="mt-2"
             />
-            <p className="text-sm text-gray-500 mt-1">
-              Consider variances greater than ±10% as significant anomalies
-            </p>
           </div>
         </CardContent>
       </Card>

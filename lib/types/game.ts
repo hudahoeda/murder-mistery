@@ -8,6 +8,7 @@ export interface Team {
   currentPuzzle: number;
   completedPuzzles: CompletedPuzzle[];
   discoveredClues: string[];
+  discoveredEvidence: string[];
   gameStartTime: Date;
   totalScore: number;
   isActive: boolean;

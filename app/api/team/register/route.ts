@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       members: JSON.stringify(newTeam.members),
       completedPuzzles: JSON.stringify(newTeam.completedPuzzles),
       discoveredClues: JSON.stringify(newTeam.discoveredClues),
+      discoveredEvidence: JSON.stringify(newTeam.discoveredEvidence),
       gameStartTime: newTeam.gameStartTime.toISOString(),
       isActive: newTeam.isActive.toString()
     };

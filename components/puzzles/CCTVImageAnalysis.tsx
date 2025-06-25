@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CheckCircle, Clock, AlertTriangle, Camera, Search, Users, Settings } from 'lucide-react';
 import { PuzzleStep } from '@/lib/types/game';
+import Image from 'next/image';
 
 interface CCTVImageAnalysisProps {
   step: PuzzleStep;
@@ -57,6 +58,20 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originalImageRef = useRef<HTMLImageElement>(null);
+
+  // Effect to reset state when the step changes
+  useEffect(() => {
+    setImageSettings({
+      brightness: 0,
+      contrast: 100,
+      saturation: 100,
+      blur: 0,
+    });
+    setSelectedBrand('');
+    setOwnershipAnswer('');
+    setShowHint(false);
+    setImageEnhanced(false);
+  }, [step]);
 
   const targetSettings = useMemo(() => ({
     brightness: 20,
@@ -138,12 +153,12 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
   useEffect(() => {
     const loadImage = () => {
       // Load original image when component mounts
-      const img = new Image();
+      const img = new window.Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         setImage(img);
       };
-      img.onerror = (error) => {
+      img.onerror = (error: any) => {
         console.error('❌ Failed to load image:', imagePath, error);
       };
       // Use the image path from step.content or fallback to existing image
@@ -206,8 +221,7 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
               <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                 {image ? (
                   <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       ref={originalImageRef}
                       src={image.src}
                       alt="Original CCTV footage"
@@ -326,11 +340,11 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Search className="w-5 h-5 text-indigo-600" />
-            Brand Identification Database
+            <Search className="w-5 h-5 text-green-600" />
+            Brand Database
           </CardTitle>
           <CardDescription>
-            Compare the enhanced image with known tool brands to identify the specific item
+            Compare the revealed tool with known brands from the database
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -343,9 +357,11 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-800 rounded p-3 h-32 flex items-center justify-center">
                   {brand.image ? (
-                    <img 
-                      src={brand.image} 
+                    <Image
+                      src={brand.image}
                       alt={`${brand.brand} wrench`}
+                      width={100}
+                      height={100}
                       className="max-h-full max-w-full object-contain"
                     />
                   ) : (
@@ -369,39 +385,37 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-            <h4 className="font-medium mb-2">Enhanced Image Analysis</h4>
-            {step.content?.enhancedImage ? (
-              <div className="mb-3">
-                <img 
-                  src={step.content.enhancedImage} 
-                  alt="Enhanced CCTV footage"
-                  className="max-w-full h-auto rounded border"
-                />
-              </div>
-            ) : (
-              <p className="text-sm text-gray-600">
-                The enhanced CCTV footage clearly shows a wrench with a distinctive blue handle and chrome finish. 
-                The grip pattern and color are consistent with professional-grade tools.
-              </p>
-            )}
-          </div>
-
-          <RadioGroup value={selectedBrand} onValueChange={setSelectedBrand}>
-            <div className="space-y-3">
-              {brandDatabase.map((brand) => (
-                <div key={brand.brand} className="flex items-center space-x-2 p-3 border rounded-lg">
-                  <RadioGroupItem value={brand.brand.toLowerCase()} id={brand.brand.toLowerCase()} />
-                  <Label htmlFor={brand.brand.toLowerCase()} className="flex-1 cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{brand.brand}</span>
-                      <span className="text-sm text-gray-500">{brand.distinctive}</span>
-                    </div>
-                  </Label>
-                </div>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div className="relative w-full h-64">
+              <Image
+                src="/images/evidence/cctv-enhanced-wrench.png"
+                alt="Enhanced CCTV of Wrench"
+                layout="fill"
+                objectFit="contain"
+                className="rounded-lg"
+              />
             </div>
-          </RadioGroup>
+            <div className="space-y-4">
+              <RadioGroup
+                value={selectedBrand}
+                onValueChange={setSelectedBrand}
+              >
+                <div className="space-y-3">
+                  {brandDatabase.map((brand) => (
+                    <div key={brand.brand} className="flex items-center space-x-2 p-3 border rounded-lg">
+                      <RadioGroupItem value={brand.brand.toLowerCase()} id={brand.brand.toLowerCase()} />
+                      <Label htmlFor={brand.brand.toLowerCase()} className="flex-1 cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{brand.brand}</span>
+                          <span className="text-sm text-gray-500">{brand.distinctive}</span>
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

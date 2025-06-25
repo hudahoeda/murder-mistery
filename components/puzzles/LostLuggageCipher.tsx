@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import { motion } from 'motion/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,7 @@ import {
 import { Puzzle, RotateCcw, Lock, CheckCircle, AlertCircle } from 'lucide-react'
 import { PuzzleStep } from '@/lib/types/game'
 import { validateAnswer } from '@/lib/utils/gameUtils'
+import Image from 'next/image'
 
 interface LostLuggageCipherProps {
   step: PuzzleStep
@@ -88,25 +90,55 @@ const SortableItem = ({ id, content, isPlaced }: SortableItemProps) => {
 
 // Step 1: Luggage Tag Assembly
 const LuggageTagAssemblyStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
-  const defaultPieces: PuzzlePiece[] = [
+  // Function to shuffle array randomly
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const newArray = [...array]
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+    }
+    return newArray
+  }
+
+  const defaultPieces = useMemo(() => [
     { id: 'piece-1', content: 'LUG', position: 0 },
     { id: 'piece-2', content: 'GE-', position: 1 },
     { id: 'piece-3', content: '457', position: 2 },
     { id: 'piece-4', content: 'BEK', position: 3 },
     { id: 'piece-5', content: 'ASI', position: 4 }
-  ]
+  ], [])
   
-  const [pieces, setPieces] = useState<PuzzlePiece[]>(
-    step.content?.pieces ? 
-      step.content.pieces.map((piece: any, index: number) => ({
+  // Initialize pieces in random order to prevent giving away the answer
+  const [pieces, setPieces] = useState<PuzzlePiece[]>(() => {
+    if (step.content?.pieces) {
+      return shuffleArray(step.content.pieces.map((piece: any, index: number) => ({
         id: piece.id || `piece-${index + 1}`,
         content: piece.content || '',
         position: index
-      })) : 
-      defaultPieces
-  )
+      })))
+    }
+    return shuffleArray(defaultPieces)
+  })
   const [submitted, setSubmitted] = useState(false)
   
+  useEffect(() => {
+    setSubmitted(false);
+    // Re-shuffle pieces when the step changes to ensure a fresh start
+    if (step.content?.pieces) {
+      setPieces(
+        shuffleArray(
+          step.content.pieces.map((piece: any, index: number) => ({
+            id: piece.id || `piece-${index + 1}`,
+            content: piece.content || '',
+            position: index,
+          })),
+        ),
+      );
+    } else {
+      setPieces(shuffleArray(defaultPieces));
+    }
+  }, [step, defaultPieces]);
+
   const correctOrder = ['LUG', 'GE-', '457', 'BEK', 'ASI']
   const isCorrectOrder = pieces.map(p => p.content).join('') === correctOrder.join('')
 
@@ -191,11 +223,19 @@ const LuggageTagAssemblyStep = ({ step, onStepComplete }: LostLuggageCipherProps
               <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
                 {step.content?.targetImage ? (
                   <div className="aspect-[3/2] bg-slate-700 rounded border-2 border-dashed border-slate-500 flex items-center justify-center p-4 relative">
-                    <img 
-                      src={step.content.targetImage} 
+                    <Image
+                      src={step.content.targetImage}
                       alt="Luggage tag template"
+                      layout="fill"
+                      objectFit="contain"
                       className="absolute inset-0 w-full h-full object-contain opacity-20"
-                      onError={(e) => console.error('❌ Luggage template failed:', step.content?.targetImage, e)}
+                      onError={e =>
+                        console.error(
+                          '❌ Luggage template failed:',
+                          step.content?.targetImage,
+                          e,
+                        )
+                      }
                     />
                     <div className="text-center relative z-10">
                       <div className="font-mono text-2xl font-bold text-amber-200 mb-2">
@@ -260,35 +300,38 @@ const LuggageTagAssemblyStep = ({ step, onStepComplete }: LostLuggageCipherProps
 
 // Step 2: Caesar Cipher Decoding
 const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
-  const [shift, setShift] = useState(0)
-  const [decodedText, setDecodedText] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  
-  const encryptedText = step.content?.encryptedText || "PHHW DW VWRUH URRP"
-  
-  const decodeCaesar = (text: string, shiftAmount: number) => {
-    return text.split('').map(char => {
-      if (char.match(/[A-Z]/)) {
-        const code = char.charCodeAt(0) - 65
-        const shifted = (code - shiftAmount + 26) % 26
-        return String.fromCharCode(shifted + 65)
-      }
-      return char
-    }).join('')
-  }
+  const [shift, setShift] = useState(0);
+  const [manualDecoded, setManualDecoded] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleShiftChange = (newShift: number) => {
-    setShift(newShift)
-    setDecodedText(decodeCaesar(encryptedText, newShift))
-  }
+  useEffect(() => {
+    setShift(0);
+    setManualDecoded('');
+    setSubmitted(false);
+  }, [step]);
+
+  const encryptedText = step.content?.encryptedText || 'CUUJ QJ IJEHQWU HEEC';
 
   const handleSubmit = () => {
-    const isCorrect = validateAnswer(decodedText, step.validation)
-    setSubmitted(true)
-    onStepComplete(decodedText, isCorrect)
-  }
+    const isCorrect = validateAnswer(manualDecoded, step.validation);
+    setSubmitted(true);
+    onStepComplete(manualDecoded, isCorrect);
+  };
 
   const wheelRotation = (shift * 360) / 26
+
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numLetters = alphabet.length;
+  const angleStep = 360 / numLetters;
+
+  // Dimensions
+  const size = 320;
+  const center = size / 2;
+  const outerRadius = 150;
+  const midRadius = 110;
+  const innerRadius = 70;
+  const outerTextRadius = 130;
+  const innerTextRadius = 90;
 
   return (
     <Card className="puzzle-container">
@@ -310,7 +353,7 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
               {encryptedText}
             </div>
             <p className="text-slate-400 text-sm mt-2">
-              <strong>Hint:</strong> The shift value is the same as the luggage number's last digit (7)
+              <strong>Hint:</strong> The shift value can be found by adding the three numbers from the luggage tag
             </p>
           </div>
 
@@ -319,77 +362,109 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
             <div>
               <h4 className="font-semibold text-amber-100 mb-3">Caesar Cipher Wheel</h4>
               <div className="flex flex-col items-center space-y-4">
-                <div className="relative w-64 h-64">
-                  {/* Outer ring (encrypted) */}
-                  <div 
-                    className="absolute inset-0 rounded-full border-4 border-amber-500 bg-slate-700 flex items-center justify-center text-xs font-mono"
-                    style={{ transform: `rotate(${wheelRotation}deg)` }}
-                  >
-                    <div className="absolute inset-4 rounded-full border-2 border-slate-500 bg-slate-800">
-                      {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter, index) => {
-                        const angle = (index * 360) / 26 - 90
-                        const x = Math.cos(angle * Math.PI / 180) * 90
-                        const y = Math.sin(angle * Math.PI / 180) * 90
+                <div className="relative" style={{ width: size, height: size }}>
+                  <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute">
+                    <defs>
+                      <linearGradient id="outer-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#fbbf24" />
+                        <stop offset="100%" stopColor="#d97706" />
+                      </linearGradient>
+                      <linearGradient id="inner-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#334155" />
+                        <stop offset="100%" stopColor="#1e293b" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Rings */}
+                    <circle cx={center} cy={center} r={outerRadius} fill="url(#outer-grad)" />
+                    <circle cx={center} cy={center} r={midRadius} fill="url(#inner-grad)" />
+                    <circle cx={center} cy={center} r={innerRadius} fill="#0f172a" />
+
+                    {/* Ticks */}
+                    {Array.from({ length: numLetters }).map((_, i) => {
+                        const angle = i * angleStep;
+                        const startX = center + midRadius * Math.cos((angle - 90) * Math.PI / 180);
+                        const startY = center + midRadius * Math.sin((angle - 90) * Math.PI / 180);
+                        const endX = center + outerRadius * Math.cos((angle - 90) * Math.PI / 180);
+                        const endY = center + outerRadius * Math.sin((angle - 90) * Math.PI / 180);
+                        return <line key={`tick-${i}`} x1={startX} y1={startY} x2={endX} y2={endY} stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1" />;
+                    })}
+                    {Array.from({ length: numLetters }).map((_, i) => {
+                        const angle = i * angleStep;
+                        const startX = center + innerRadius * Math.cos((angle - 90) * Math.PI / 180);
+                        const startY = center + innerRadius * Math.sin((angle - 90) * Math.PI / 180);
+                        const endX = center + midRadius * Math.cos((angle - 90) * Math.PI / 180);
+                        const endY = center + midRadius * Math.sin((angle - 90) * Math.PI / 180);
+                        return <line key={`tick-inner-${i}`} x1={startX} y1={startY} x2={endX} y2={endY} stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />;
+                    })}
+
+                    {/* Inner Text (Plain) */}
+                    <g>
+                      {alphabet.split('').map((char, i) => {
+                        const angle = i * angleStep;
+                        const x = center + innerTextRadius * Math.cos((angle - 90) * Math.PI / 180);
+                        const y = center + innerTextRadius * Math.sin((angle - 90) * Math.PI / 180);
                         return (
-                          <span
-                            key={letter}
-                            className="absolute text-amber-200 font-bold"
-                            style={{
-                              left: `calc(50% + ${x}px)`,
-                              top: `calc(50% + ${y}px)`,
-                              transform: `translate(-50%, -50%) rotate(${-wheelRotation}deg)`
-                            }}
+                          <text
+                            key={`inner-${i}`}
+                            x={x}
+                            y={y}
+                            dy="0.35em"
+                            textAnchor="middle"
+                            fill="#cbd5e1"
+                            fontSize="16"
+                            fontWeight="bold"
+                            transform={`rotate(${angle}, ${x}, ${y})`}
                           >
-                            {letter}
-                          </span>
-                        )
+                            {char}
+                          </text>
+                        );
                       })}
+                    </g>
+                    
+                    {/* Outer Text (Cipher) */}
+                    <motion.g
+                      animate={{ rotate: wheelRotation }}
+                      transition={{ type: 'spring', duration: 0.7, bounce: 0.25 }}
+                      style={{ transformOrigin: `${center}px ${center}px` }}
+                    >
+                      {alphabet.split('').map((char, i) => {
+                        const angle = i * angleStep;
+                        const x = center + outerTextRadius * Math.cos((angle - 90) * Math.PI / 180);
+                        const y = center + outerTextRadius * Math.sin((angle - 90) * Math.PI / 180);
+                        return (
+                          <text
+                            key={`outer-${i}`}
+                            x={x}
+                            y={y}
+                            dy="0.35em"
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="20"
+                            fontWeight="bold"
+                            transform={`rotate(${angle}, ${x}, ${y})`}
+                          >
+                            {char}
+                          </text>
+                        );
+                      })}
+                    </motion.g>
+                  </svg>
+                  
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex flex-col items-center justify-center w-24">
+                      <Label htmlFor="shift-input" className="text-slate-300 text-xs mb-1">Enter Key:</Label>
+                      <Input
+                        id="shift-input"
+                        type="number"
+                        value={shift}
+                        onChange={(e) => setShift(parseInt(e.target.value) || 0)}
+                        min="0"
+                        max="25"
+                        className="w-20 text-center bg-slate-700 border-slate-600 text-white"
+                      />
                     </div>
                   </div>
-                  
-                  {/* Inner ring (decoded) */}
-                  <div className="absolute inset-8 rounded-full border-2 border-slate-400 bg-slate-900 flex items-center justify-center">
-                    {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter, index) => {
-                      const angle = (index * 360) / 26 - 90
-                      const x = Math.cos(angle * Math.PI / 180) * 60
-                      const y = Math.sin(angle * Math.PI / 180) * 60
-                      return (
-                        <span
-                          key={letter}
-                          className="absolute text-slate-300 text-sm"
-                          style={{
-                            left: `calc(50% + ${x}px)`,
-                            top: `calc(50% + ${y}px)`,
-                            transform: 'translate(-50%, -50%)'
-                          }}
-                        >
-                          {letter}
-                        </span>
-                      )
-                    })}
-                  </div>
-                  
-                  {/* Center indicator */}
-                  <div className="absolute inset-1/2 w-2 h-2 bg-amber-500 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <Label className="text-slate-300">Shift:</Label>
-                  <Input
-                    type="number"
-                    value={shift}
-                    onChange={(e) => handleShiftChange(parseInt(e.target.value) || 0)}
-                    min="0"
-                    max="25"
-                    className="w-20"
-                  />
-                  <Button
-                    onClick={() => handleShiftChange(7)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Try 7
-                  </Button>
                 </div>
               </div>
             </div>
@@ -402,13 +477,17 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
                   <Label className="text-slate-300 mb-2 block">Encrypted:</Label>
                   <div className="font-mono text-red-300 mb-4">{encryptedText}</div>
                   
-                  <Label className="text-slate-300 mb-2 block">Decoded:</Label>
-                  <div className="font-mono text-lg text-green-300 bg-slate-900 p-3 rounded border">
-                    {decodedText || "Adjust the shift value to decode..."}
-                  </div>
+                  <Label className="text-slate-300 mb-2 block">Enter Decoded Message:</Label>
+                  <Input
+                    type="text"
+                    value={manualDecoded}
+                    onChange={e => setManualDecoded(e.target.value.toUpperCase())}
+                    placeholder="Use the cipher wheel to decode manually..."
+                    className="font-mono text-lg bg-slate-900"
+                  />
                 </div>
 
-                {decodedText === "MEET AT STORE ROOM" && (
+                {manualDecoded === 'MEET AT STORAGE ROOM' && (
                   <div className="p-3 bg-green-500/10 border border-green-500/30 rounded">
                     <h5 className="font-semibold text-green-200 mb-1">✓ Message Decoded!</h5>
                     <p className="text-green-100 text-sm">
@@ -426,7 +505,7 @@ const CaesarCipherStep = ({ step, onStepComplete }: LostLuggageCipherProps) => {
             </div>
             <Button 
               onClick={handleSubmit}
-              disabled={decodedText !== "MEET AT STORE ROOM" || submitted}
+              disabled={manualDecoded !== 'MEET AT STORAGE ROOM' || submitted}
               className="bg-amber-500 text-slate-900 hover:bg-amber-400"
             >
               {submitted ? (
@@ -447,6 +526,11 @@ const EvidenceLockerStep = ({ step, onStepComplete }: LostLuggageCipherProps) =>
   const [accessCode, setAccessCode] = useState('')
   const [submitted, setSubmitted] = useState(false)
   
+  useEffect(() => {
+    setAccessCode('')
+    setSubmitted(false)
+  }, [step])
+
   const handleSubmit = () => {
     const isCorrect = validateAnswer(accessCode, step.validation)
     setSubmitted(true)
@@ -477,7 +561,7 @@ const EvidenceLockerStep = ({ step, onStepComplete }: LostLuggageCipherProps) =>
               <ul className="text-blue-100 text-sm space-y-1">
                 <li>• The meeting was arranged for "quarter past eight in the evening"</li>
                 <li>• Military time format is used for all station security systems</li>
-                <li>• Time found in other evidence: 20:15</li>
+                <li>• Access codes use 24-hour time format (HHMM)</li>
               </ul>
             </div>
           </div>

@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react'
 import { Clock, Play, Pause, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { cn } from '@/lib/utils/gameUtils'
+import { cn } from '@/lib/utils'
 
 interface TimerProps {
-  startTime?: Date
+  startTime?: Date | string
   isRunning?: boolean
   onTimeUpdate?: (elapsedMinutes: number) => void
   showControls?: boolean
@@ -15,7 +15,7 @@ interface TimerProps {
 }
 
 export const Timer = ({ 
-  startTime = new Date(),
+  startTime: startTimeProp = new Date(),
   isRunning = true,
   onTimeUpdate,
   showControls = false,
@@ -23,16 +23,24 @@ export const Timer = ({
 }: TimerProps) => {
   const [elapsedTime, setElapsedTime] = useState(0) // in seconds
   const [isPaused, setIsPaused] = useState(!isRunning)
-  const [lastStartTime, setLastStartTime] = useState<Date>(startTime)
+  const [lastStartTime, setLastStartTime] = useState<Date>(new Date(startTimeProp))
 
   useEffect(() => {
-    let interval: NodeJS.Timeout
+    const newStartTime = new Date(startTimeProp)
+    setLastStartTime(newStartTime)
+    const elapsedSinceStart = Math.floor((new Date().getTime() - newStartTime.getTime()) / 1000)
+    setElapsedTime(Math.max(0, elapsedSinceStart))
+  }, [startTimeProp])
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined
 
     if (!isPaused) {
+      const resumeTime = new Date(Date.now() - elapsedTime * 1000)
       interval = setInterval(() => {
         const now = new Date()
-        const elapsed = Math.floor((now.getTime() - lastStartTime.getTime()) / 1000)
-        setElapsedTime(elapsed)
+        const elapsed = Math.floor((now.getTime() - resumeTime.getTime()) / 1000)
+        setElapsedTime(Math.max(0, elapsed))
         
         // Call onTimeUpdate with minutes
         if (onTimeUpdate) {
@@ -46,7 +54,7 @@ export const Timer = ({
         clearInterval(interval)
       }
     }
-  }, [isPaused, lastStartTime, onTimeUpdate])
+  }, [isPaused, elapsedTime, onTimeUpdate])
 
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600)
@@ -68,12 +76,7 @@ export const Timer = ({
   }
 
   const handlePlayPause = () => {
-    if (isPaused) {
-      setLastStartTime(new Date(Date.now() - elapsedTime * 1000))
-      setIsPaused(false)
-    } else {
-      setIsPaused(true)
-    }
+    setIsPaused(prev => !prev)
   }
 
   const handleReset = () => {

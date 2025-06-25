@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Circle, Eye, RotateCcw, ZoomIn } from 'lucide-react';
 import { PuzzleStep } from '@/lib/types/game';
+import Image from 'next/image';
 
 interface StationEnvironmentRiddleProps {
   step: PuzzleStep;
@@ -20,11 +21,11 @@ const depotAreas = [
   { id: 'depot-d', coordinates: [250, 280], label: 'Depot D', description: 'Maintenance Only (24/7)' }
 ];
 
-const panoramicHotspots = [
-  { id: 'toolbox', coordinates: [15, 45], evidence: false, label: 'Standard Toolbox' },
-  { id: 'workbench', coordinates: [35, 40], evidence: false, label: 'Maintenance Workbench' },
-  { id: 'hidden-locker', coordinates: [75, 50], evidence: true, item: 'bloodstained-wrench', label: 'Hidden Storage Locker' },
-  { id: 'oil-drums', coordinates: [50, 60], evidence: false, label: 'Oil Storage Drums' }
+const imageHotspots = [
+  { id: 'toolbox', coordinates: [12, 60], evidence: false, label: 'Standard Toolbox' },
+  { id: 'workbench', coordinates: [30, 75], evidence: false, label: 'Maintenance Workbench' },
+  { id: 'hidden-locker', coordinates: [75, 55], evidence: true, item: 'bloodstained-wrench', label: 'Hidden Storage Locker' },
+  { id: 'oil-drums', coordinates: [50, 80], evidence: false, label: 'Oil Storage Drums' }
 ];
 
 // Step 1: Location Riddle Component
@@ -148,36 +149,19 @@ const StationMapStep = ({ step, onStepComplete }: StationEnvironmentRiddleProps)
         <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
           {step.content?.mapImage ? (
             <div className="w-full h-80 border rounded-lg bg-white dark:bg-slate-900 relative overflow-hidden">
-              <img 
-                src={step.content.mapImage} 
+              <Image
+                src={step.content.mapImage}
                 alt="Station map"
-                className="w-full h-full object-contain"
-                onError={(e) => console.error('❌ Station map failed:', step.content?.mapImage, e)}
+                layout="fill"
+                objectFit="contain"
+                onError={e =>
+                  console.error(
+                    '❌ Station map failed:',
+                    step.content?.mapImage,
+                    e,
+                  )
+                }
               />
-              {/* Interactive depot areas overlay */}
-              {depotAreas.map((depot) => (
-                <div
-                  key={depot.id}
-                  className={`absolute cursor-pointer transition-all duration-200 ${
-                    selectedDepot === depot.id ? 'bg-blue-500/30' : 'bg-gray-500/20 hover:bg-blue-300/20'
-                  }`}
-                  style={{
-                    left: `${(depot.coordinates[0] / 500) * 100}%`,
-                    top: `${(depot.coordinates[1] / 400) * 100}%`,
-                    width: '80px',
-                    height: '50px',
-                    transform: 'translate(-50%, -50%)',
-                    border: selectedDepot === depot.id ? '2px solid #3b82f6' : '1px solid #64748b',
-                    borderRadius: '4px'
-                  }}
-                  onClick={() => setSelectedDepot(depot.id)}
-                  title={`${depot.label} - ${depot.description}`}
-                >
-                  <div className="text-xs text-center pt-1 font-semibold text-slate-700 dark:text-slate-200">
-                    {depot.label}
-                  </div>
-                </div>
-              ))}
             </div>
           ) : (
             <svg
@@ -194,18 +178,19 @@ const StationMapStep = ({ step, onStepComplete }: StationEnvironmentRiddleProps)
                 Main Platform Area
               </text>
 
-              {depotAreas.map((depot) => (
+              {depotAreas.map(depot => (
                 <g key={depot.id}>
                   <rect
                     x={depot.coordinates[0] - 40}
                     y={depot.coordinates[1] - 25}
                     width="80"
                     height="50"
-                    fill={selectedDepot === depot.id ? "#3b82f6" : "#cbd5e1"}
-                    stroke={selectedDepot === depot.id ? "#1d4ed8" : "#64748b"}
+                    fill={selectedDepot === depot.id ? '#3b82f6' : '#cbd5e1'}
+                    stroke={
+                      selectedDepot === depot.id ? '#1d4ed8' : '#64748b'
+                    }
                     strokeWidth="2"
-                    className="cursor-pointer hover:fill-blue-200 transition-colors"
-                    onClick={() => setSelectedDepot(depot.id)}
+                    className="transition-colors"
                   />
                   <text
                     x={depot.coordinates[0]}
@@ -297,7 +282,6 @@ const StationMapStep = ({ step, onStepComplete }: StationEnvironmentRiddleProps)
 const EvidenceDiscoveryStep = ({ step, onStepComplete }: StationEnvironmentRiddleProps) => {
   const [selectedEvidence, setSelectedEvidence] = useState<string>('');
   const [showHint, setShowHint] = useState<boolean>(false);
-  const [panoramicRotation, setPanoramicRotation] = useState<number>(0);
   const [hoveredHotspot, setHoveredHotspot] = useState<string>('');
 
   const evidenceOptions = step.content.options;
@@ -307,29 +291,21 @@ const EvidenceDiscoveryStep = ({ step, onStepComplete }: StationEnvironmentRiddl
     onStepComplete(selectedEvidence, isCorrect);
   };
 
-  const handlePanoramicClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleImageClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-    
-    panoramicHotspots.forEach(hotspot => {
+
+    imageHotspots.forEach(hotspot => {
       const distance = Math.sqrt(
-        Math.pow(x - hotspot.coordinates[0], 2) + 
+        Math.pow(x - hotspot.coordinates[0], 2) +
         Math.pow(y - hotspot.coordinates[1], 2)
       );
-      
+
       if (distance < 8 && hotspot.evidence) {
         setSelectedEvidence(hotspot.item || '');
       }
     });
-  };
-
-  const rotatePanoramic = (direction: 'left' | 'right') => {
-    const rotationStep = 30;
-    const newRotation = direction === 'left' 
-      ? panoramicRotation - rotationStep 
-      : panoramicRotation + rotationStep;
-    setPanoramicRotation(((newRotation % 360) + 360) % 360);
   };
 
   return (
@@ -342,99 +318,48 @@ const EvidenceDiscoveryStep = ({ step, onStepComplete }: StationEnvironmentRiddl
       </CardHeader>
       <CardContent className="space-y-6">
         <p className="text-slate-600 dark:text-slate-400">
-          Explore the 360° view of Depot A to find and identify the hidden evidence.
+          Explore the image of Depot A to find and identify the hidden evidence.
         </p>
 
-        <div className="relative bg-slate-900 rounded-lg overflow-hidden">
-          <div
-            className="relative h-80 cursor-crosshair"
-            onClick={handlePanoramicClick}
-            style={step.content?.panoramicImage ? {
-              backgroundImage: `url(${step.content.panoramicImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: `${panoramicRotation}% center`,
-              backgroundRepeat: 'repeat-x',
-              transition: 'background-position 0.5s ease'
-            } : {
-              backgroundImage: 'linear-gradient(45deg, #1e293b 0%, #475569 50%, #1e293b 100%)',
-              backgroundSize: '200% 100%',
-              backgroundPosition: `${panoramicRotation}% center`,
-              transition: 'background-position 0.5s ease'
-            }}
-          >
-            {!step.content?.panoramicImage && (
-              <div className="absolute inset-0 opacity-60">
-                <div 
-                  className="absolute bottom-0 left-0 w-16 h-20 bg-slate-700 rounded-t-lg"
-                  style={{ transform: `translateX(${(panoramicRotation * 2) % 100}px)` }}
-                />
-                <div 
-                  className="absolute bottom-0 right-0 w-12 h-24 bg-slate-600 rounded-t-lg"
-                  style={{ transform: `translateX(${-(panoramicRotation * 1.5) % 80}px)` }}
-                />
-              </div>
-            )}
+        <div className="relative bg-slate-900 rounded-lg overflow-hidden group">
+          <Image
+            src={step.content?.panoramicImage}
+            alt="Depot A"
+            width={500}
+            height={320}
+            className="w-full h-auto cursor-crosshair"
+            onClick={handleImageClick}
+          />
 
-            {panoramicHotspots.map((hotspot) => {
-              const adjustedX = (hotspot.coordinates[0] + (panoramicRotation / 10)) % 100;
-              const isVisible = adjustedX > 10 && adjustedX < 90;
-              
-              return isVisible ? (
-                <div
-                  key={hotspot.id}
-                  className={`absolute w-4 h-4 rounded-full cursor-pointer transition-all ${
-                    hotspot.evidence 
-                      ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                      : 'bg-blue-400 hover:bg-blue-500'
-                  }`}
-                  style={{
-                    left: `${adjustedX}%`,
-                    top: `${hotspot.coordinates[1]}%`,
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 10
-                  }}
-                  onMouseEnter={() => setHoveredHotspot(hotspot.id)}
-                  onMouseLeave={() => setHoveredHotspot('')}
-                  onClick={() => {
-                    if (hotspot.evidence && hotspot.item) {
-                      setSelectedEvidence(hotspot.item);
-                    }
-                  }}
-                >
-                  {hoveredHotspot === hotspot.id && (
-                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                      {hotspot.label}
-                    </div>
-                  )}
+          {imageHotspots.map((hotspot) => (
+            <div
+              key={hotspot.id}
+              className={`absolute w-5 h-5 rounded-full cursor-pointer transition-all border-2
+                ${hotspot.evidence ? 'border-red-500' : 'border-blue-400'}
+                ${hoveredHotspot === hotspot.id || (hotspot.evidence && selectedEvidence === hotspot.item)
+                  ? 'bg-white/50 scale-125'
+                  : 'bg-white/20 group-hover:bg-white/40'
+                }`}
+              style={{
+                left: `${hotspot.coordinates[0]}%`,
+                top: `${hotspot.coordinates[1]}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
+              onMouseEnter={() => setHoveredHotspot(hotspot.id)}
+              onMouseLeave={() => setHoveredHotspot('')}
+              onClick={() => {
+                if (hotspot.evidence && hotspot.item) {
+                  setSelectedEvidence(hotspot.item);
+                }
+              }}
+            >
+              {hoveredHotspot === hotspot.id && (
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                  {hotspot.label}
                 </div>
-              ) : null;
-            })}
-
-            <div className="absolute top-4 left-4 flex space-x-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => rotatePanoramic('left')}
-                className="bg-black/50 hover:bg-black/70 text-white"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => rotatePanoramic('right')}
-                className="bg-black/50 hover:bg-black/70 text-white"
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
+              )}
             </div>
-
-            <div className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full">
-              <div className="text-xs font-mono">
-                {Math.round(panoramicRotation)}°
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="space-y-3">

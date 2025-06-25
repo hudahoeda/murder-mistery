@@ -235,6 +235,7 @@ export function createNewTeam(name: string, members: string[]): Team {
     currentPuzzle: 1,
     completedPuzzles: [],
     discoveredClues: [],
+    discoveredEvidence: [],
     gameStartTime: new Date(),
     totalScore: 0,
     isActive: true
