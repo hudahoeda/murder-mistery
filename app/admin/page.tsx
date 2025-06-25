@@ -20,8 +20,20 @@ import {
   CheckCircle,
   AlertCircle,
   Timer,
-  Target
+  Target,
+  Trash2
 } from 'lucide-react';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
 
 interface TeamSummary {
   id: string;
@@ -75,6 +87,24 @@ const AdminDashboard = () => {
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
       console.error('Failed to fetch admin data:', err);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetGame = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/reset', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset game state');
+      }
+
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred on reset');
       setLoading(false);
     }
   };
@@ -199,6 +229,30 @@ const AdminDashboard = () => {
             <Download className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Reset Game
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-slate-900 border-slate-700">
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="text-amber-100">Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-slate-400">
+                        This action cannot be undone. This will permanently delete all team data, progress, and scores from the database.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                        <Button variant="destructive" onClick={handleResetGame}>Continue</Button>
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
 

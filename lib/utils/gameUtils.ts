@@ -39,12 +39,13 @@ export function calculatePuzzleScore(
   hintsUsed: number, 
   difficulty: number
 ): number {
-  const baseScore = 1000 * difficulty
-  const timeDeduction = Math.min(timeSpent * 5, baseScore * 0.3) // Max 30% deduction for time
-  const attemptDeduction = (attempts - 1) * 50 // 50 points per extra attempt
-  const hintDeduction = hintsUsed * 100 // 100 points per hint
+  const baseScore = 1000 * difficulty;
+  const timeDeduction = Math.min(timeSpent * 5, baseScore * 0.3); // Max 30% deduction for time
+  const attemptDeduction = (attempts - 1) * 50; // 50 points per extra attempt
+  const hintDeduction = hintsUsed * 100; // 100 points per hint
   
-  return Math.max(baseScore - timeDeduction - attemptDeduction - hintDeduction, 100)
+  const finalScore = Math.max(baseScore - timeDeduction - attemptDeduction - hintDeduction, 100);
+  return finalScore;
 }
 
 /**
@@ -307,6 +308,32 @@ export function updateTeamProgress(
   }
   
   return updatedTeam
+}
+
+export function updateTeamHintUsage(team: Team, puzzleId: string): Team {
+  const updatedTeam = { ...team };
+
+  let completedPuzzle = updatedTeam.completedPuzzles.find(cp => cp.puzzleId === puzzleId);
+
+  if (!completedPuzzle) {
+    completedPuzzle = {
+      puzzleId,
+      teamId: team.id,
+      completedAt: new Date(), // This is temporary, will be updated on actual puzzle completion
+      timeSpent: 0,
+      attempts: 0,
+      stepsCompleted: [],
+      hintsUsed: 0,
+      finalScore: 0,
+    };
+    updatedTeam.completedPuzzles.push(completedPuzzle);
+  }
+
+  completedPuzzle.hintsUsed += 1;
+  // Also deduct points from total score for using a hint
+  updatedTeam.totalScore = Math.max(0, updatedTeam.totalScore - 50); // e.g., 50 points per hint
+
+  return updatedTeam;
 }
 
 /**

@@ -29,7 +29,7 @@ export async function GET() {
     
     if (teamKeys.length === 0) {
       await redis.quit();
-      return NextResponse.json({ teams: [], summary: { totalTeams: 0, activeTeams: 0, averageProgress: 0 } });
+      return NextResponse.json({ teams: [], summary: { totalTeams: 0, activeTeams: 0, averageProgress: 0, totalScore: 0, averageGameTime: 0 } });
     }
 
     // Get all team data
@@ -86,6 +86,7 @@ export async function GET() {
         discoveredClues: team.discoveredClues.length,
         totalScore: team.totalScore,
         totalGameTime,
+        pointsPerMinute: totalGameTime > 0 ? parseFloat((team.totalScore / totalGameTime).toFixed(1)) : 0,
         lastActivity: team.completedPuzzles.length > 0 ? 
           Math.max(...team.completedPuzzles.flatMap(p => 
             p.stepsCompleted.map(s => new Date(s.completedAt).getTime())

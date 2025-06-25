@@ -15,6 +15,7 @@ interface TeamSummary {
   totalScore: number;
   progressPercentage: number;
   totalGameTime: number; // in minutes
+  pointsPerMinute: number;
 }
 
 const LeaderboardPage = () => {
@@ -131,7 +132,7 @@ const LeaderboardPage = () => {
                       </TableCell>
                       <TableCell className="text-right font-mono">{formatTime(team.totalGameTime)}</TableCell>
                       <TableCell className="text-right font-mono text-green-400">
-                        {team.totalGameTime > 0 ? (team.totalScore / team.totalGameTime).toFixed(1) : '0.0'}
+                        {team.pointsPerMinute.toFixed(1)}
                       </TableCell>
                     </TableRow>
                   ))

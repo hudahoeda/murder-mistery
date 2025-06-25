@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { getActiveTeam, setActiveTeam } from '@/lib/utils/gameUtils';
+import { getActiveTeam, setActiveTeam, updateTeamHintUsage } from '@/lib/utils/gameUtils';
 import { Team } from '@/lib/types/game';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -177,25 +177,31 @@ const GameDashboard = () => {
     }
   };
 
-  const handleHintUsed = () => {
+  const handleHintUsed = async () => {
+    if (!team || !currentPuzzle) return;
+
     setHintsUsed(hintsUsed + 1);
     setShowHint(true);
     
-    // Optionally save hint usage to Redis
-    if (team && currentPuzzle) {
-      fetch(`/api/team/${team.id}/progress`, {
+    try {
+      const updatedTeamData = updateTeamHintUsage(team, currentPuzzle.id);
+      setTeam(updatedTeamData);
+
+      await fetch(`/api/team/${team.id}/progress`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           puzzleId: currentPuzzle.id,
           stepId: currentPuzzle.steps[currentStepIndex].id,
-          answer: null,
           isCorrect: false,
           timeSpent: 0,
           attempts: 0,
-          hintsUsed: 1,
+          hintsUsed: 1, // Signal to backend that a hint was used
         }),
-      }).catch(console.error);
+      });
+    } catch (error) {
+      console.error('Failed to update hint usage:', error);
+      // Optionally revert state if API call fails
     }
   };
 
