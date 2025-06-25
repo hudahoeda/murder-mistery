@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
-import getRedisClient from '@/lib/redis';
+import connectToRedis from '@/lib/redis';
 
 export async function POST() {
   try {
-    const redis = getRedisClient();
-    await redis.connect();
+    const redis = await connectToRedis();
 
     // FLUSHDB will delete all keys in the current database.
     await redis.flushDb();
-
-    await redis.quit();
 
     return NextResponse.json({ message: 'Game has been reset successfully.' }, { status: 200 });
   } catch (error) {

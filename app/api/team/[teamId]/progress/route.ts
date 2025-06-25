@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import getRedisClient from '@/lib/redis';
+import connectToRedis from '@/lib/redis';
 import { updateTeamProgress } from '@/lib/utils/gameUtils';
 import { Team, CompletedPuzzle, CompletedStep } from '@/lib/types/game';
 import cluesData from '@/lib/data/clues.json';
@@ -21,14 +21,18 @@ const rehydrateTeam = (redisData: Record<string, string>): Team => {
     return {
       id: redisData.id,
       name: redisData.name,
-      members: JSON.parse(redisData.members),
-      currentPuzzle: parseInt(redisData.currentPuzzle, 10),
-      completedPuzzles: redisData.completedPuzzles ? JSON.parse(redisData.completedPuzzles) : [],
-      discoveredClues: redisData.discoveredClues ? JSON.parse(redisData.discoveredClues) : [],
-      discoveredEvidence: redisData.discoveredEvidence ? JSON.parse(redisData.discoveredEvidence) : [],
+    members: JSON.parse(redisData.members || '[]'),
+    currentPuzzle: parseInt(redisData.currentPuzzle || '1'),
+    completedPuzzles: JSON.parse(redisData.completedPuzzles || '[]'),
+    discoveredClues: JSON.parse(redisData.discoveredClues || '[]'),
+    discoveredEvidence: JSON.parse(redisData.discoveredEvidence || '[]'),
       gameStartTime: new Date(redisData.gameStartTime),
-      totalScore: parseInt(redisData.totalScore, 10),
+    totalScore: parseInt(redisData.totalScore || '0'),
       isActive: redisData.isActive === 'true',
+    finalAccusationMade: redisData.finalAccusationMade === 'true',
+    finalAccusationCorrect: redisData.finalAccusationCorrect === 'true',
+    accusedSuspectId: redisData.accusedSuspectId || undefined,
+    gameCompletedAt: redisData.gameCompletedAt ? new Date(redisData.gameCompletedAt) : undefined,
     };
   };
 
@@ -66,6 +70,25 @@ const checkForNewClues = (team: Team): string[] => {
   return newlyRevealed;
 };
 
+const dehydrateTeamForRedis = (team: Team) => {
+  return {
+    id: team.id,
+    name: team.name,
+    members: JSON.stringify(team.members),
+    currentPuzzle: team.currentPuzzle.toString(),
+    completedPuzzles: JSON.stringify(team.completedPuzzles),
+    discoveredClues: JSON.stringify(team.discoveredClues),
+    discoveredEvidence: JSON.stringify(team.discoveredEvidence || []),
+    gameStartTime: team.gameStartTime.toISOString(),
+    totalScore: team.totalScore.toString(),
+    isActive: team.isActive.toString(),
+    finalAccusationMade: (team.finalAccusationMade || false).toString(),
+    finalAccusationCorrect: (team.finalAccusationCorrect || false).toString(),
+    accusedSuspectId: team.accusedSuspectId || '',
+    gameCompletedAt: team.gameCompletedAt ? new Date(team.gameCompletedAt).toISOString() : '',
+  };
+};
+
 export async function POST(request: Request, { params }: any) {
   const resolvedParams = await params;
   const teamId = resolvedParams.teamId as string;
@@ -82,12 +105,10 @@ export async function POST(request: Request, { params }: any) {
       return NextResponse.json({ error: 'Invalid input', details: validation.error.flatten() }, { status: 400 });
     }
 
-    const redis = getRedisClient();
-    await redis.connect();
+    const redis = await connectToRedis();
 
     const teamData = await redis.hGetAll(`team:${teamId}`);
     if (Object.keys(teamData).length === 0) {
-      await redis.quit();
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
     
@@ -95,11 +116,12 @@ export async function POST(request: Request, { params }: any) {
     
     const { puzzleId, stepId, answer, isCorrect, timeSpent, attempts, hintsUsed } = validation.data;
     
-    // Handle hint-only updates (when only tracking hint usage)
     if (hintsUsed > 0 && attempts === 0 && !answer) {
-      // Find or create completed puzzle entry for hint tracking
-      let completedPuzzle = currentTeam.completedPuzzles.find(cp => cp.puzzleId === puzzleId);
-      
+      // This is a hint-only update
+      const teamWithHintUpdate = { ...currentTeam };
+
+      // Find or create a completed puzzle entry to track the hint
+      let completedPuzzle = teamWithHintUpdate.completedPuzzles.find(cp => cp.puzzleId === puzzleId);
       if (!completedPuzzle) {
         completedPuzzle = {
           puzzleId,
@@ -111,39 +133,24 @@ export async function POST(request: Request, { params }: any) {
           hintsUsed: 0,
           finalScore: 0
         };
-        currentTeam.completedPuzzles.push(completedPuzzle);
+        teamWithHintUpdate.completedPuzzles.push(completedPuzzle);
       }
       
+      // Increment hints used and deduct points
       completedPuzzle.hintsUsed += hintsUsed;
+      teamWithHintUpdate.totalScore = Math.max(0, teamWithHintUpdate.totalScore - (50 * hintsUsed));
       
-      // Flatten the updated team object for Redis
-      const teamForRedis = {
-          ...currentTeam,
-          members: JSON.stringify(currentTeam.members),
-          completedPuzzles: JSON.stringify(currentTeam.completedPuzzles),
-          discoveredClues: JSON.stringify(currentTeam.discoveredClues),
-          discoveredEvidence: JSON.stringify(currentTeam.discoveredEvidence || []),
-          gameStartTime: currentTeam.gameStartTime.toISOString(),
-          isActive: currentTeam.isActive.toString(),
-          currentPuzzle: currentTeam.currentPuzzle,
-          totalScore: currentTeam.totalScore
-      };
-
+      const teamForRedis = dehydrateTeamForRedis(teamWithHintUpdate);
       await redis.hSet(`team:${currentTeam.id}`, teamForRedis);
-      await redis.quit();
 
-      return NextResponse.json(currentTeam, { status: 200 });
+      return NextResponse.json(teamWithHintUpdate, { status: 200 });
     }
     
+    // This is a regular progress update
     const updatedTeam = updateTeamProgress(currentTeam, puzzleId, stepId, answer, isCorrect, timeSpent, attempts);
     
-    // Add hint usage to the completed puzzle
-    if (hintsUsed > 0) {
-      const completedPuzzle = updatedTeam.completedPuzzles.find(cp => cp.puzzleId === puzzleId);
-      if (completedPuzzle) {
-        completedPuzzle.hintsUsed += hintsUsed;
-      }
-    }
+    // The front-end sends hintsUsed on the next step submission, so we don't need to double-count here
+    // as it's factored into the puzzle's final score calculation.
 
     // Check for new clues and add them to discovered clues
     const newClues = checkForNewClues(updatedTeam);
@@ -151,18 +158,7 @@ export async function POST(request: Request, { params }: any) {
       updatedTeam.discoveredClues = [...updatedTeam.discoveredClues, ...newClues];
     }
 
-    // Flatten the updated team object for Redis
-    const teamForRedis = {
-        ...updatedTeam,
-        members: JSON.stringify(updatedTeam.members),
-        completedPuzzles: JSON.stringify(updatedTeam.completedPuzzles),
-        discoveredClues: JSON.stringify(updatedTeam.discoveredClues),
-        discoveredEvidence: JSON.stringify(updatedTeam.discoveredEvidence || []),
-        gameStartTime: updatedTeam.gameStartTime.toISOString(),
-        isActive: updatedTeam.isActive.toString(),
-        currentPuzzle: updatedTeam.currentPuzzle,
-        totalScore: updatedTeam.totalScore
-    };
+    const teamForRedis = dehydrateTeamForRedis(updatedTeam);
 
     await redis.hSet(`team:${updatedTeam.id}`, teamForRedis);
     
@@ -171,15 +167,14 @@ export async function POST(request: Request, { params }: any) {
     const analyticsData = {
       teamId,
       lastUpdated: new Date().toISOString(),
-      totalTimeSpent: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.timeSpent, 0),
-      totalAttempts: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.attempts, 0),
-      totalHintsUsed: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.hintsUsed, 0),
-      completedSteps: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.stepsCompleted.filter(s => s.isCorrect).length, 0),
-      discoveredCluesCount: updatedTeam.discoveredClues.length,
+      totalTimeSpent: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.timeSpent, 0).toString(),
+      totalAttempts: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.attempts, 0).toString(),
+      totalHintsUsed: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.hintsUsed, 0).toString(),
+      completedSteps: updatedTeam.completedPuzzles.reduce((acc, p) => acc + p.stepsCompleted.filter(s => s.isCorrect).length, 0).toString(),
+      discoveredCluesCount: updatedTeam.discoveredClues.length.toString(),
     };
     
     await redis.hSet(analyticsKey, analyticsData);
-    await redis.quit();
 
     return NextResponse.json(updatedTeam, { status: 200 });
   } catch (error) {

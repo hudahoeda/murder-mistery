@@ -303,7 +303,9 @@ export function updateTeamProgress(
     if (allStepsCorrect) {
       updatedTeam.currentPuzzle += 1;
       // Optionally calculate final score for this puzzle
-      completedPuzzle.finalScore = calculatePuzzleScore(completedPuzzle.timeSpent, completedPuzzle.attempts, completedPuzzle.hintsUsed, puzzleData.difficulty);
+      const puzzleScore = calculatePuzzleScore(completedPuzzle.timeSpent, completedPuzzle.attempts, completedPuzzle.hintsUsed, puzzleData.difficulty);
+      completedPuzzle.finalScore = puzzleScore;
+      updatedTeam.totalScore += puzzleScore;
     }
   }
   

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import getRedisClient from '@/lib/redis';
-import { Team } from '@/lib/types/game';
+import connectToRedis from '@/lib/redis';
+import { Team, CompletedPuzzle } from '@/lib/types/game';
 import puzzlesData from '@/lib/data/puzzles.json';
 
 // Helper function to rehydrate team data from Redis
@@ -8,33 +8,35 @@ const rehydrateTeam = (redisData: Record<string, string>): Team => {
   return {
     id: redisData.id,
     name: redisData.name,
-    members: JSON.parse(redisData.members),
-    currentPuzzle: parseInt(redisData.currentPuzzle, 10),
-    completedPuzzles: redisData.completedPuzzles ? JSON.parse(redisData.completedPuzzles) : [],
-    discoveredClues: redisData.discoveredClues ? JSON.parse(redisData.discoveredClues) : [],
-    discoveredEvidence: redisData.discoveredEvidence ? JSON.parse(redisData.discoveredEvidence) : [],
+    members: JSON.parse(redisData.members || '[]'),
+    currentPuzzle: parseInt(redisData.currentPuzzle || '1'),
+    completedPuzzles: JSON.parse(redisData.completedPuzzles || '[]'),
+    discoveredClues: JSON.parse(redisData.discoveredClues || '[]'),
+    discoveredEvidence: JSON.parse(redisData.discoveredEvidence || '[]'),
     gameStartTime: new Date(redisData.gameStartTime),
-    totalScore: parseInt(redisData.totalScore, 10),
+    totalScore: parseInt(redisData.totalScore || '0'),
     isActive: redisData.isActive === 'true',
+    finalAccusationMade: redisData.finalAccusationMade === 'true',
+    finalAccusationCorrect: redisData.finalAccusationCorrect === 'true',
+    accusedSuspectId: redisData.accusedSuspectId || undefined,
+    gameCompletedAt: redisData.gameCompletedAt ? new Date(redisData.gameCompletedAt) : undefined,
   };
 };
 
 export async function GET() {
   try {
-    const redis = getRedisClient();
-    await redis.connect();
+    const redis = await connectToRedis();
 
     // Get all team keys
     const teamKeys = await redis.keys('team:*');
     
     if (teamKeys.length === 0) {
-      await redis.quit();
       return NextResponse.json({ teams: [], summary: { totalTeams: 0, activeTeams: 0, averageProgress: 0, totalScore: 0, averageGameTime: 0 } });
     }
 
     // Get all team data
     const teamsData = await Promise.all(
-      teamKeys.map(async (key) => {
+      teamKeys.map(async (key: string) => {
         const teamData = await redis.hGetAll(key);
         return Object.keys(teamData).length > 0 ? rehydrateTeam(teamData) : null;
       })
@@ -43,9 +45,9 @@ export async function GET() {
     const validTeams = teamsData.filter((team): team is Team => team !== null);
     
     // Calculate summary statistics
-    const activeTeams = validTeams.filter(team => team.isActive).length;
-    const totalProgress = validTeams.reduce((acc, team) => {
-      const completedPuzzles = team.completedPuzzles.filter(p => {
+    const activeTeams = validTeams.filter((team: Team) => team.isActive).length;
+    const totalProgress = validTeams.reduce((acc: number, team: Team) => {
+      const completedPuzzles = team.completedPuzzles.filter((p: CompletedPuzzle) => {
         const puzzleData = puzzlesData.puzzles.find(pd => pd.id === p.puzzleId);
         return puzzleData && p.stepsCompleted.length === puzzleData.steps.length && 
                p.stepsCompleted.every(s => s.isCorrect);
@@ -96,8 +98,6 @@ export async function GET() {
 
     // Sort teams by last activity (most recent first)
     teamSummaries.sort((a, b) => b.lastActivity - a.lastActivity);
-
-    await redis.quit();
 
     const response = {
       teams: teamSummaries,

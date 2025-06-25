@@ -156,10 +156,12 @@ const PlatformIdentificationStep = ({ step, onStepComplete }: TrainSchedulePuzzl
                       <div className="space-y-2">
                         <div className="aspect-video bg-slate-700 rounded border flex items-center justify-center">
                           {platform.image ? (
-                            <img 
+                            <Image
                               src={platform.image} 
                               alt={`${platform.name} sign`}
-                              className="max-w-full max-h-full object-contain rounded"
+                              width={400}
+                              height={200}
+                              className="w-full h-auto object-contain rounded"
                             />
                           ) : (
                             <span className="text-slate-400 text-sm">Platform Image</span>

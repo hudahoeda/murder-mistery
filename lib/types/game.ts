@@ -12,6 +12,10 @@ export interface Team {
   gameStartTime: Date;
   totalScore: number;
   isActive: boolean;
+  finalAccusationMade?: boolean;
+  finalAccusationCorrect?: boolean;
+  accusedSuspectId?: string;
+  gameCompletedAt?: Date;
 }
 
 export interface PuzzleStep {

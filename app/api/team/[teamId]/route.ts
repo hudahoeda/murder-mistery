@@ -1,48 +1,122 @@
-import { NextResponse } from 'next/server';
-import getRedisClient from '@/lib/redis';
+import { NextRequest, NextResponse } from 'next/server';
+import connectToRedis from '@/lib/redis';
 import { Team } from '@/lib/types/game';
 
 // Helper function to rehydrate team data from Redis
-const rehydrateTeam = (redisData: Record<string, string>): Team => {
+const rehydrateTeam = (teamData: Record<string, string>): Team => {
   return {
-    id: redisData.id,
-    name: redisData.name,
-    members: JSON.parse(redisData.members),
-    currentPuzzle: parseInt(redisData.currentPuzzle, 10),
-    completedPuzzles: redisData.completedPuzzles ? JSON.parse(redisData.completedPuzzles) : [],
-    discoveredClues: redisData.discoveredClues ? JSON.parse(redisData.discoveredClues) : [],
-    discoveredEvidence: redisData.discoveredEvidence ? JSON.parse(redisData.discoveredEvidence) : [],
-    gameStartTime: new Date(redisData.gameStartTime),
-    totalScore: parseInt(redisData.totalScore, 10),
-    isActive: redisData.isActive === 'true',
+    id: teamData.id,
+    name: teamData.name,
+    members: JSON.parse(teamData.members || '[]'),
+    currentPuzzle: parseInt(teamData.currentPuzzle || '1'),
+    completedPuzzles: JSON.parse(teamData.completedPuzzles || '[]'),
+    discoveredClues: JSON.parse(teamData.discoveredClues || '[]'),
+    discoveredEvidence: JSON.parse(teamData.discoveredEvidence || '[]'),
+    gameStartTime: new Date(teamData.gameStartTime),
+    totalScore: parseInt(teamData.totalScore || '0'),
+    isActive: teamData.isActive === 'true',
+    finalAccusationMade: teamData.finalAccusationMade === 'true',
+    finalAccusationCorrect: teamData.finalAccusationCorrect === 'true',
+    accusedSuspectId: teamData.accusedSuspectId || undefined,
+    gameCompletedAt: teamData.gameCompletedAt ? new Date(teamData.gameCompletedAt) : undefined,
   };
 };
 
-export async function GET(request: Request, { params }: any) {
-  const resolvedParams = await params;
-  const teamId = resolvedParams.teamId as string;
-  
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ teamId: string }> }
+) {
   try {
-    if (!teamId) {
-      return NextResponse.json({ error: 'Team ID is required' }, { status: 400 });
-    }
-
-    const redis = getRedisClient();
-    await redis.connect();
-
+    const { teamId } = await params;
+    
+    const redis = await connectToRedis();
+    
     const teamData = await redis.hGetAll(`team:${teamId}`);
     
-    await redis.quit();
-
     if (Object.keys(teamData).length === 0) {
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
-    
+
     const team = rehydrateTeam(teamData);
 
-    return NextResponse.json(team, { status: 200 });
+    return NextResponse.json(team);
   } catch (error) {
-    console.error(`Failed to fetch team ${teamId}:`, error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error fetching team:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ teamId: string }> }
+) {
+  try {
+    const { teamId } = await params;
+    const updates = await request.json();
+
+    const redis = await connectToRedis();
+
+    // Fetch existing team data
+    const existingData = await redis.hGetAll(`team:${teamId}`);
+    if (Object.keys(existingData).length === 0) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    }
+
+    const team = rehydrateTeam(existingData);
+
+    // Update team with final accusation data
+    const updatedTeam = {
+      ...team,
+      ...updates,
+    };
+
+    // Save updated team data
+    const teamDataToSave = {
+      id: updatedTeam.id,
+      name: updatedTeam.name,
+      members: JSON.stringify(updatedTeam.members),
+      currentPuzzle: updatedTeam.currentPuzzle.toString(),
+      completedPuzzles: JSON.stringify(updatedTeam.completedPuzzles),
+      discoveredClues: JSON.stringify(updatedTeam.discoveredClues),
+      discoveredEvidence: JSON.stringify(updatedTeam.discoveredEvidence || []),
+      gameStartTime: updatedTeam.gameStartTime.toISOString(),
+      totalScore: updatedTeam.totalScore.toString(),
+      isActive: updatedTeam.isActive.toString(),
+      finalAccusationMade: (updatedTeam.finalAccusationMade || false).toString(),
+      finalAccusationCorrect: (updatedTeam.finalAccusationCorrect || false).toString(),
+      accusedSuspectId: updatedTeam.accusedSuspectId || '',
+      gameCompletedAt: updatedTeam.gameCompletedAt ? new Date(updatedTeam.gameCompletedAt).toISOString() : '',
+    };
+
+    await redis.hSet(`team:${teamId}`, teamDataToSave);
+
+    // If this is a completed game, add to leaderboard
+    if (updates.finalAccusationMade && updates.gameCompletedAt) {
+      const completionTime = Math.floor(
+        (new Date(updates.gameCompletedAt).getTime() - new Date(team.gameStartTime).getTime()) / 1000 / 60
+      );
+
+      const leaderboardEntry = {
+        teamId: team.id,
+        teamName: team.name,
+        totalScore: team.totalScore,
+        timeToComplete: completionTime,
+        puzzlesCompleted: team.completedPuzzles.length,
+        accusationCorrect: updates.finalAccusationCorrect || false,
+        completedAt: updates.gameCompletedAt,
+      };
+
+      // Add to sorted set (sorted by score, then by time)
+      const sortScore = updates.finalAccusationCorrect 
+        ? team.totalScore * 1000000 - completionTime 
+        : team.totalScore * 1000 - completionTime;
+
+      await redis.zAdd('leaderboard', { score: sortScore, value: JSON.stringify(leaderboardEntry) });
+    }
+
+    return NextResponse.json(updatedTeam);
+  } catch (error) {
+    console.error('Error updating team:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

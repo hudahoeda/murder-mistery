@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import getRedisClient from '@/lib/redis';
+import connectToRedis from '@/lib/redis';
 import { Team, CompletedPuzzle, CompletedStep } from '@/lib/types/game';
 import puzzlesData from '@/lib/data/puzzles.json';
 
@@ -8,14 +8,18 @@ const rehydrateTeam = (redisData: Record<string, string>): Team => {
   return {
     id: redisData.id,
     name: redisData.name,
-    members: JSON.parse(redisData.members),
-    currentPuzzle: parseInt(redisData.currentPuzzle, 10),
-    completedPuzzles: redisData.completedPuzzles ? JSON.parse(redisData.completedPuzzles) : [],
-    discoveredClues: redisData.discoveredClues ? JSON.parse(redisData.discoveredClues) : [],
-    discoveredEvidence: redisData.discoveredEvidence ? JSON.parse(redisData.discoveredEvidence) : [],
+    members: JSON.parse(redisData.members || '[]'),
+    currentPuzzle: parseInt(redisData.currentPuzzle || '1'),
+    completedPuzzles: JSON.parse(redisData.completedPuzzles || '[]'),
+    discoveredClues: JSON.parse(redisData.discoveredClues || '[]'),
+    discoveredEvidence: JSON.parse(redisData.discoveredEvidence || '[]'),
     gameStartTime: new Date(redisData.gameStartTime),
-    totalScore: parseInt(redisData.totalScore, 10),
+    totalScore: parseInt(redisData.totalScore || '0'),
     isActive: redisData.isActive === 'true',
+    finalAccusationMade: redisData.finalAccusationMade === 'true',
+    finalAccusationCorrect: redisData.finalAccusationCorrect === 'true',
+    accusedSuspectId: redisData.accusedSuspectId || undefined,
+    gameCompletedAt: redisData.gameCompletedAt ? new Date(redisData.gameCompletedAt) : undefined,
   };
 };
 
@@ -28,12 +32,10 @@ export async function GET(request: Request, { params }: any) {
       return NextResponse.json({ error: 'Team ID is required' }, { status: 400 });
     }
 
-    const redis = getRedisClient();
-    await redis.connect();
+    const redis = await connectToRedis();
 
     const teamData = await redis.hGetAll(`team:${teamId}`);
     if (Object.keys(teamData).length === 0) {
-      await redis.quit();
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
     
@@ -93,8 +95,6 @@ export async function GET(request: Request, { params }: any) {
       };
     });
     
-    await redis.quit();
-
     const analytics = {
       teamInfo: {
         id: team.id,

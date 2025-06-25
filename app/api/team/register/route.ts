@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createNewTeam } from '@/lib/utils/gameUtils';
-import getRedisClient from '@/lib/redis';
+import connectToRedis from '@/lib/redis';
 
 const teamRegistrationSchema = z.object({
   teamName: z.string().min(3).max(50),
@@ -21,25 +21,29 @@ export async function POST(request: Request) {
     const newTeam = createNewTeam(teamName, members);
 
     const teamForRedis = {
-      ...newTeam,
+      id: newTeam.id,
+      name: newTeam.name,
       members: JSON.stringify(newTeam.members),
+      currentPuzzle: newTeam.currentPuzzle.toString(),
       completedPuzzles: JSON.stringify(newTeam.completedPuzzles),
       discoveredClues: JSON.stringify(newTeam.discoveredClues),
       discoveredEvidence: JSON.stringify(newTeam.discoveredEvidence),
       gameStartTime: newTeam.gameStartTime.toISOString(),
-      isActive: newTeam.isActive.toString()
+      totalScore: newTeam.totalScore.toString(),
+      isActive: newTeam.isActive.toString(),
+      finalAccusationMade: (newTeam.finalAccusationMade || false).toString(),
+      finalAccusationCorrect: (newTeam.finalAccusationCorrect || false).toString(),
+      accusedSuspectId: newTeam.accusedSuspectId || '',
+      gameCompletedAt: newTeam.gameCompletedAt ? newTeam.gameCompletedAt.toISOString() : '',
     };
 
-    const redis = getRedisClient();
-    await redis.connect();
+    const redis = await connectToRedis();
     
     // Use a hash to store team details
     await redis.hSet(`team:${newTeam.id}`, teamForRedis);
     
     // Add the new team's ID to a set of all teams for easy retrieval
     await redis.sAdd('teams', newTeam.id);
-
-    await redis.quit();
 
     return NextResponse.json(newTeam, { status: 201 });
   } catch (error) {

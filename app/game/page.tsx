@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Image from 'next/image';
-import { Clock, Users, FileText, Map, LogOut, Loader2, HelpCircle, Lock, Copy, Check } from 'lucide-react';
+import { Clock, Users, FileText, Map, LogOut, Loader2, HelpCircle, Lock, Copy, Check, Trophy } from 'lucide-react';
 import puzzlesData from '@/lib/data/puzzles.json';
 import suspectsData from '@/lib/data/suspects.json';
 import evidenceData from '@/lib/data/evidence.json';
@@ -17,6 +17,7 @@ import cluesData from '@/lib/data/clues.json';
 import { Clue } from '@/lib/types/game';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import confetti from 'canvas-confetti';
 
 // Import all puzzle components
 import { TrainSchedulePuzzle } from '@/components/puzzles/TrainSchedulePuzzle';
@@ -27,6 +28,18 @@ import CCTVImageAnalysis from '@/components/puzzles/CCTVImageAnalysis';
 import MathematicalScheduleAnalysis from '@/components/puzzles/MathematicalScheduleAnalysis';
 import { Timer } from '@/components/game/Timer';
 import { FinalAccusationForm } from '@/components/game/FinalAccusationForm';
+import { Leaderboard } from '@/components/game/Leaderboard';
+import { CelebrationScreen } from '@/components/game/CelebrationScreen';
+
+interface LeaderboardEntry {
+  teamId: string;
+  teamName: string;
+  totalScore: number;
+  timeToComplete: number;
+  puzzlesCompleted: number;
+  accusationCorrect: boolean;
+  rank: number;
+}
 
 const puzzleComponentMap: { [key: string]: React.FC<any> } = {
   'train-schedule-investigation': TrainSchedulePuzzle,
@@ -51,6 +64,8 @@ const GameDashboard = () => {
   const [progressUpdateLoading, setProgressUpdateLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isGameComplete, setIsGameComplete] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const progressUpdateInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -218,16 +233,72 @@ const GameDashboard = () => {
     }
   };
 
-  const handleFinalAccusation = (suspectId: string) => {
+  const handleFinalAccusation = async (suspectId: string) => {
+    if (!team || team.finalAccusationMade) return;
+
     const guiltySuspect = suspectsData.suspects.find(s => s.isGuilty);
-    if (guiltySuspect?.id === suspectId) {
-      alert(`Congratulations! You have correctly identified ${guiltySuspect.name} as the murderer. Case closed!`);
-    } else {
-      const incorrectSuspect = suspectsData.suspects.find(s => s.id === suspectId);
-      alert(`Incorrect. ${incorrectSuspect?.name || 'The accused'} is not the murderer. The case remains unsolved...`);
+    const isCorrect = guiltySuspect?.id === suspectId;
+    
+    // Calculate time to complete
+    const timeToComplete = Math.floor((new Date().getTime() - new Date(team.gameStartTime).getTime()) / 1000 / 60);
+    
+    try {
+      // Save final accusation to server
+      const response = await fetch(`/api/team/${team.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          finalAccusationMade: true,
+          finalAccusationCorrect: isCorrect,
+          accusedSuspectId: suspectId,
+          gameCompletedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to save final accusation');
+      
+      const updatedTeam: Team = await response.json();
+      setTeam(updatedTeam);
+
+      if (isCorrect) {
+        // Trigger confetti celebration
+        confetti({
+          particleCount: 200,
+          spread: 100,
+          origin: { y: 0.6 },
+          colors: ['#fbbf24', '#f59e0b', '#d97706', '#dc2626', '#991b1b'],
+        });
+
+        // Wait a moment for confetti to start, then show more
+        setTimeout(() => {
+          confetti({
+            particleCount: 100,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#fbbf24', '#f59e0b', '#d97706'],
+          });
+          confetti({
+            particleCount: 100,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#fbbf24', '#f59e0b', '#d97706'],
+          });
+        }, 250);
+
+        // Fetch leaderboard data
+        const leaderboardResponse = await fetch('/api/team/leaderboard');
+        if (leaderboardResponse.ok) {
+          const leaderboard: LeaderboardEntry[] = await leaderboardResponse.json();
+          setLeaderboardData(leaderboard);
+          setShowLeaderboard(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving final accusation:', error);
+      alert('Error saving your accusation. Please try again.');
     }
-    // Optional: Redirect or show a final score screen
-    router.push('/');
   };
 
   const checkForNewItems = (updatedTeam: Team, itemType: 'clues' | 'evidence'): any[] => {
@@ -482,7 +553,17 @@ const GameDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {isGameComplete ? (
-                    <FinalAccusationForm suspects={suspectsData.suspects} onSubmit={handleFinalAccusation} />
+                    showLeaderboard && team.finalAccusationMade && team.finalAccusationCorrect ? (
+                      <CelebrationScreen 
+                        team={team} 
+                        leaderboardData={leaderboardData} 
+                        murdererName={suspectsData.suspects.find(s => s.isGuilty)?.name || ''} 
+                        murdererImage={suspectsData.suspects.find(s => s.isGuilty)?.imageUrl || ''}
+                        onHomeClick={() => router.push('/')}
+                      />
+                    ) : (
+                      <FinalAccusationForm suspects={suspectsData.suspects} team={team} onSubmit={handleFinalAccusation} />
+                    )
                   ) : (
                     <>
                       {/* Hint Display */}
