@@ -14,10 +14,11 @@ import puzzlesData from '@/lib/data/puzzles.json';
 import suspectsData from '@/lib/data/suspects.json';
 import evidenceData from '@/lib/data/evidence.json';
 import cluesData from '@/lib/data/clues.json';
-import { Clue } from '@/lib/types/game';
+import { Clue, Evidence } from '@/lib/types/game';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import confetti from 'canvas-confetti';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 // Import all puzzle components
 import { TrainSchedulePuzzle } from '@/components/puzzles/TrainSchedulePuzzle';
@@ -60,13 +61,15 @@ const GameDashboard = () => {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [newClue, setNewClue] = useState<Clue | null>(null);
-  const [newEvidence, setNewEvidence] = useState<any>(null);
+  const [newEvidence, setNewEvidence] = useState<Evidence | null>(null);
   const [progressUpdateLoading, setProgressUpdateLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isGameComplete, setIsGameComplete] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const progressUpdateInterval = useRef<NodeJS.Timeout | null>(null);
+  const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
+  const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
 
   useEffect(() => {
     const activeTeamId = localStorage.getItem('murder-mystery-active-team-id');
@@ -146,11 +149,34 @@ const GameDashboard = () => {
       if (!response.ok) throw new Error('Failed to save progress');
       
       const updatedTeam: Team = await response.json();
-      setTeam(updatedTeam);
-
+      
       if (isCorrect) {
+        // Check for newly revealed items by comparing with the previous team state
+        const oldClueIds = new Set(team.discoveredClues);
+        const newlyRevealedClues = updatedTeam.discoveredClues.filter(id => !oldClueIds.has(id));
+        if (newlyRevealedClues.length > 0) {
+          const clueToShow = cluesData.clues.find(c => c.id === newlyRevealedClues[0]);
+          if (clueToShow) {
+            setNewClue(clueToShow as Clue);
+            setTimeout(() => setNewClue(null), 5000);
+          }
+        }
+
+        const oldEvidenceIds = new Set(team.discoveredEvidence || []);
+        const newlyRevealedEvidence = (updatedTeam.discoveredEvidence || []).filter(id => !oldEvidenceIds.has(id));
+        if (newlyRevealedEvidence.length > 0) {
+          const evidenceToShow = evidenceData.evidence.find(e => e.id === newlyRevealedEvidence[0]);
+           if (evidenceToShow) {
+            setNewEvidence(evidenceToShow as Evidence);
+            setTimeout(() => setNewEvidence(null), 5000);
+          }
+        }
+        
+        // Update team state *after* all checks
+        setTeam(updatedTeam);
+
         // Move to next step or next puzzle
-        const currentPuzzleDetails = puzzlesData.puzzles[team.currentPuzzle - 1];
+        const currentPuzzleDetails = puzzlesData.puzzles.find(p => p.id === currentPuzzle.id);
         if (currentPuzzleDetails && currentStepIndex < currentPuzzleDetails.steps.length - 1) {
           setCurrentStepIndex(currentStepIndex + 1);
           // Reset tracking for new step
@@ -167,21 +193,11 @@ const GameDashboard = () => {
           setHintsUsed(0);
           setShowHint(false);
         }
-        
-        // Check for new clues and evidence
-        const newlyRevealedClues = checkForNewItems(updatedTeam, 'clues');
-        if (newlyRevealedClues.length > 0) {
-          setNewClue(newlyRevealedClues[0]); // Show first new clue
-          setTimeout(() => setNewClue(null), 5000); // Hide after 5 seconds
-        }
-
-        const newlyRevealedEvidence = checkForNewItems(updatedTeam, 'evidence');
-        if (newlyRevealedEvidence.length > 0) {
-          setNewEvidence(newlyRevealedEvidence[0]); // Show first new evidence
-          setTimeout(() => setNewEvidence(null), 5000); // Hide after 5 seconds
-        }
       } else {
         setStepAttempts(attempts);
+        // Even if incorrect, the backend might have deducted points for the attempt.
+        // So, we should still update the team state.
+        setTeam(updatedTeam);
         alert('Incorrect. Try again.');
       }
     } catch (error) {
@@ -231,6 +247,11 @@ const GameDashboard = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleEvidenceClick = (evidence: Evidence) => {
+    setSelectedEvidence(evidence);
+    setIsEvidenceModalOpen(true);
   };
 
   const handleFinalAccusation = async (suspectId: string) => {
@@ -299,54 +320,6 @@ const GameDashboard = () => {
       console.error('Error saving final accusation:', error);
       alert('Error saving your accusation. Please try again.');
     }
-  };
-
-  const checkForNewItems = (updatedTeam: Team, itemType: 'clues' | 'evidence'): any[] => {
-    const data = itemType === 'clues' ? cluesData.clues : evidenceData.evidence;
-    const discoveredItems = itemType === 'clues' ? updatedTeam.discoveredClues : updatedTeam.discoveredEvidence || [];
-    const newlyRevealed: any[] = [];
-
-    (data as any[]).forEach(item => {
-      // If item or its reveal condition is missing, or already discovered, skip it
-      if (!item || !item.revealCondition || discoveredItems.includes(item.id)) {
-        return;
-      }
-
-      // Check if this item's puzzle is completed
-      const relevantPuzzleCompletion = updatedTeam.completedPuzzles.find(p => p.puzzleId === item.revealCondition.puzzleId);
-      if (relevantPuzzleCompletion) {
-        // If stepId is defined, check if that specific step is complete and correct
-        if (item.revealCondition.stepId) {
-          const stepIsComplete = relevantPuzzleCompletion.stepsCompleted.some(s => s.stepId === item.revealCondition.stepId && s.isCorrect);
-          if (stepIsComplete) {
-            newlyRevealed.push(item);
-          }
-        } else {
-          // If no stepId, item is revealed by completing the puzzle
-          const puzzleData = puzzlesData.puzzles.find(p => p.id === item.revealCondition.puzzleId);
-          if (puzzleData && relevantPuzzleCompletion.stepsCompleted.length === puzzleData.steps.length) {
-             const allStepsCorrect = puzzleData.steps.every(step => 
-                relevantPuzzleCompletion.stepsCompleted.find(cs => cs.stepId === step.id && cs.isCorrect)
-             );
-             if(allStepsCorrect) newlyRevealed.push(item);
-          }
-        }
-      }
-    });
-    
-    if (newlyRevealed.length > 0) {
-        const newItemIds = newlyRevealed.map(c => c.id);
-        if (itemType === 'clues') {
-            const updatedDiscoveredClues = [...updatedTeam.discoveredClues, ...newItemIds];
-            setTeam(prevTeam => prevTeam ? {...prevTeam, discoveredClues: updatedDiscoveredClues} : null);
-        } else {
-            const updatedDiscoveredEvidence = [...(updatedTeam.discoveredEvidence || []), ...newItemIds];
-            setTeam(prevTeam => prevTeam ? {...prevTeam, discoveredEvidence: updatedDiscoveredEvidence} : null);
-        }
-        // Here you would also make an API call to save the new discoveries to Redis
-    }
-    
-    return newlyRevealed;
   };
 
   const calculateOverallProgress = (): number => {
@@ -503,11 +476,18 @@ const GameDashboard = () => {
                   <CardTitle>Evidence Board</CardTitle>
                 </CardHeader>
                 <CardContent className="max-h-[60vh] overflow-y-auto grid grid-cols-2 gap-4">
-                  {(evidenceData.evidence as any[]).map(item => {
+                  {(evidenceData.evidence as Evidence[]).map(item => {
                     const isDiscovered = team.discoveredEvidence?.includes(item.id);
                     return isDiscovered ? (
-                      <div key={item.id} className="group relative">
-                          <Image src={item.imageUrl} alt={item.name} width={150} height={150} className="rounded-lg object-cover" />
+                      <div key={item.id} className="group relative cursor-pointer" onClick={() => handleEvidenceClick(item)}>
+                          {item.imageUrl ? (
+                            <Image src={item.imageUrl} alt={item.name} width={150} height={150} className="rounded-lg object-cover w-full h-full" />
+                          ) : (
+                            <div className="w-full h-[150px] bg-slate-700/50 rounded-lg flex flex-col items-center justify-center text-center p-2 border-2 border-slate-600">
+                                <FileText className="w-6 h-6 text-slate-400 mb-2" />
+                                <p className="text-xs text-slate-300">{item.name}</p>
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <p className="text-xs text-center p-2">{item.name}</p>
                           </div>
@@ -658,6 +638,49 @@ const GameDashboard = () => {
             </Card>
         </aside>
       </main>
+
+      <Dialog open={isEvidenceModalOpen} onOpenChange={setIsEvidenceModalOpen}>
+        <DialogContent className="bg-slate-800 text-white border-slate-700 max-w-2xl">
+          {selectedEvidence && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-amber-100">{selectedEvidence.name}</DialogTitle>
+                <DialogDescription className="text-slate-400">
+                  {selectedEvidence.location} - Discovered by {selectedEvidence.discoveredBy}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedEvidence.imageUrl ? (
+                  <Image
+                    src={selectedEvidence.imageUrl}
+                    alt={selectedEvidence.name}
+                    width={400}
+                    height={400}
+                    className="rounded-lg object-contain w-full h-auto"
+                  />
+                ) : (
+                  <div className="bg-slate-900 rounded-lg flex items-center justify-center">
+                    <FileText className="w-16 h-16 text-slate-600" />
+                  </div>
+                )}
+                <div className="space-y-3 text-sm">
+                  <p className="text-slate-300">{selectedEvidence.description}</p>
+                  {selectedEvidence.analysisResults && (
+                    <div className="p-3 bg-slate-900/50 rounded-lg">
+                      <h4 className="font-semibold text-amber-200 mb-1">Analysis Results</h4>
+                      <p className="text-slate-400 text-xs">{selectedEvidence.analysisResults}</p>
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-semibold text-amber-200">Category</h4>
+                    <p className="text-slate-400 capitalize">{selectedEvidence.category}</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { updateTeamProgress } from '@/lib/utils/gameUtils';
 import { Team, CompletedPuzzle, CompletedStep } from '@/lib/types/game';
 import cluesData from '@/lib/data/clues.json';
 import puzzlesData from '@/lib/data/puzzles.json';
+import evidenceData from '@/lib/data/evidence.json';
 
 const progressUpdateSchema = z.object({
   puzzleId: z.string(),
@@ -36,32 +37,36 @@ const rehydrateTeam = (redisData: Record<string, string>): Team => {
     };
   };
 
-// Helper function to check for new clues
-const checkForNewClues = (team: Team): string[] => {
+// Helper function to check for new clues and evidence
+const checkForNewItems = (
+  team: Team,
+  items: any[],
+  discoveredItemIds: string[]
+): string[] => {
   const newlyRevealed: string[] = [];
-  (cluesData.clues as any[]).forEach(clue => {
-    // If clue is already discovered, skip it
-    if (team.discoveredClues.includes(clue.id)) {
+  items.forEach(item => {
+    // If item is already discovered, skip it
+    if (!item.revealCondition || discoveredItemIds.includes(item.id)) {
       return;
     }
 
-    // Check if this clue's puzzle is completed
-    const relevantPuzzleCompletion = team.completedPuzzles.find(p => p.puzzleId === clue.revealCondition.puzzleId);
+    // Check if this item's puzzle is completed
+    const relevantPuzzleCompletion = team.completedPuzzles.find(p => p.puzzleId === item.revealCondition.puzzleId);
     if (relevantPuzzleCompletion) {
       // If stepId is defined, check if that specific step is complete and correct
-      if (clue.revealCondition.stepId) {
-        const stepIsComplete = relevantPuzzleCompletion.stepsCompleted.some(s => s.stepId === clue.revealCondition.stepId && s.isCorrect);
+      if (item.revealCondition.stepId) {
+        const stepIsComplete = relevantPuzzleCompletion.stepsCompleted.some(s => s.stepId === item.revealCondition.stepId && s.isCorrect);
         if (stepIsComplete) {
-          newlyRevealed.push(clue.id);
+          newlyRevealed.push(item.id);
         }
       } else {
-        // If no stepId, clue is revealed by completing the puzzle
-        const puzzleData = puzzlesData.puzzles.find(p => p.id === clue.revealCondition.puzzleId);
+        // If no stepId, item is revealed by completing the puzzle
+        const puzzleData = puzzlesData.puzzles.find(p => p.id === item.revealCondition.puzzleId);
         if (puzzleData && relevantPuzzleCompletion.stepsCompleted.length === puzzleData.steps.length) {
            const allStepsCorrect = puzzleData.steps.every(step => 
               relevantPuzzleCompletion.stepsCompleted.find(cs => cs.stepId === step.id && cs.isCorrect)
            );
-           if(allStepsCorrect) newlyRevealed.push(clue.id);
+           if(allStepsCorrect) newlyRevealed.push(item.id);
         }
       }
     }
@@ -153,9 +158,15 @@ export async function POST(request: Request, { params }: any) {
     // as it's factored into the puzzle's final score calculation.
 
     // Check for new clues and add them to discovered clues
-    const newClues = checkForNewClues(updatedTeam);
+    const newClues = checkForNewItems(updatedTeam, cluesData.clues, updatedTeam.discoveredClues);
     if (newClues.length > 0) {
-      updatedTeam.discoveredClues = [...updatedTeam.discoveredClues, ...newClues];
+      updatedTeam.discoveredClues = [...new Set([...updatedTeam.discoveredClues, ...newClues])];
+    }
+
+    // Check for new evidence and add it to discovered evidence
+    const newEvidence = checkForNewItems(updatedTeam, evidenceData.evidence, updatedTeam.discoveredEvidence || []);
+    if (newEvidence.length > 0) {
+      updatedTeam.discoveredEvidence = [...new Set([...(updatedTeam.discoveredEvidence || []), ...newEvidence])];
     }
 
     const teamForRedis = dehydrateTeamForRedis(updatedTeam);

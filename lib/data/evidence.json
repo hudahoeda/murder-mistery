@@ -23,7 +23,7 @@
       "importance": "critical",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/luggage-tag-fragments.png",
-      "analysisResults": "Caesar cipher with shift of 7. Decoded message: 'MEET AT STORE ROOM'. Handwriting analysis pending.",
+      "analysisResults": "The tag contains what appears to be a coded message below the tag number. Handwriting analysis is pending.",
       "revealCondition": { "puzzleId": "lost-luggage-cipher", "stepId": "luggage-tag-assembly" }
     },
     {
@@ -49,7 +49,8 @@
       "importance": "critical",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/cctv-enhanced-wrench.png",
-      "analysisResults": "Image enhancement reveals blue-handled tool consistent with Tekiro wrench. Figure height and build matches several suspects."
+      "analysisResults": "Image enhancement reveals blue-handled tool consistent with Tekiro wrench. Figure height and build matches several suspects.",
+      "revealCondition": { "puzzleId": "cctv-image-analysis", "stepId": "brand-identification" }
     },
     {
       "id": "keycard-access-log",
@@ -74,7 +75,8 @@
       "importance": "important",
       "relatedSuspects": ["sari-station-master", "rahman-security"],
       "imageUrl": "/images/evidence/schedule-delay-display.png",
-      "analysisResults": "Delay logged at 19:42. Caused by 'signal maintenance' - no maintenance was actually scheduled."
+      "analysisResults": "Delay logged at 19:42. Caused by 'signal maintenance' - no maintenance was actually scheduled.",
+      "revealCondition": { "puzzleId": "train-schedule-investigation", "stepId": "schedule-analysis" }
     },
     {
       "id": "financial-records",
@@ -86,7 +88,8 @@
       "importance": "critical",
       "relatedSuspects": ["rahman-security"],
       "imageUrl": "/images/evidence/financial-discrepancy-report.png",
-      "analysisResults": "Total discrepancy: Rp 45,000,000. Pak Budi's signature on all authorization forms. Pattern suggests systematic embezzlement."
+      "analysisResults": "Total discrepancy: Rp 45,000,000. Pak Budi's signature on all authorization forms. Pattern suggests systematic embezzlement.",
+      "revealCondition": { "puzzleId": "mathematical-schedule-analysis", "stepId": "staff-schedule-correlation" }
     },
     {
       "id": "witness-statement-maya",
@@ -111,7 +114,8 @@
       "importance": "important",
       "relatedSuspects": ["agus-maintenance"],
       "imageUrl": "/images/evidence/tool-inventory-list.png",
-      "analysisResults": "Tekiro 12-inch adjustable wrench, Serial #TK-2024-157, issued to Agus Santoso. Last inventory check: November 2024 - all tools accounted for."
+      "analysisResults": "Tekiro 12-inch adjustable wrench, Serial #TK-2024-157, issued to Agus Santoso. Last inventory check: November 2024 - all tools accounted for.",
+      "revealCondition": { "puzzleId": "cctv-image-analysis", "stepId": "ownership-correlation" }
     },
     {
       "id": "passenger-flow-data",
@@ -123,7 +127,8 @@
       "importance": "important",
       "relatedSuspects": ["sari-station-master"],
       "imageUrl": "/images/evidence/passenger-flow-chart.png",
-      "analysisResults": "Statistically significant anomaly. Normal Platform 2 traffic: 40-70 passengers per 15-minute period. During incident: only 8 passengers."
+      "analysisResults": "Statistically significant anomaly. Normal Platform 2 traffic: 40-70 passengers per 15-minute period. During incident: only 8 passengers.",
+      "revealCondition": { "puzzleId": "mathematical-schedule-analysis", "stepId": "passenger-anomaly-analysis" }
     },
     {
       "id": "depot-access-logs",
@@ -135,7 +140,8 @@
       "importance": "important",
       "relatedSuspects": ["agus-maintenance", "rahman-security"],
       "imageUrl": "/images/evidence/depot-access-history.png",
-      "analysisResults": "Last 30 days: Agus Santoso (daily), Rahman Pratama (weekly security checks), Sari Indraswari (monthly inspections). No unauthorized access detected."
+      "analysisResults": "Last 30 days: Agus Santoso (daily), Rahman Pratama (weekly security checks), Sari Indraswari (monthly inspections). No unauthorized access detected.",
+      "revealCondition": { "puzzleId": "station-environment-riddle", "stepId": "platform-identification-map" }
     },
     {
       "id": "victim-personal-phone",

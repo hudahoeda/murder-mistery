@@ -27,6 +27,10 @@ interface ImageSettings {
   blur: number;
 }
 
+type CorrectSettings = {
+  [K in keyof ImageSettings]: boolean;
+};
+
 interface BrandInfo {
   brand: string;
   image: string;
@@ -55,6 +59,12 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
   const [stepResults, setStepResults] = useState<boolean[]>([]);
   const [imageEnhanced, setImageEnhanced] = useState(false);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [correctSettings, setCorrectSettings] = useState<CorrectSettings>({
+    brightness: false,
+    contrast: false,
+    saturation: false,
+    blur: false,
+  });
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originalImageRef = useRef<HTMLImageElement>(null);
@@ -99,12 +109,19 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
 
   const checkImageEnhancement = useCallback(() => {
     const tolerance = 10;
-    const isEnhanced = 
-      Math.abs(imageSettings.brightness - targetSettings.brightness) <= tolerance &&
-      Math.abs(imageSettings.contrast - targetSettings.contrast) <= tolerance &&
-      Math.abs(imageSettings.saturation - targetSettings.saturation) <= tolerance &&
-      Math.abs(imageSettings.blur - targetSettings.blur) <= tolerance;
+    const brightnessCorrect = Math.abs(imageSettings.brightness - targetSettings.brightness) <= tolerance;
+    const contrastCorrect = Math.abs(imageSettings.contrast - targetSettings.contrast) <= tolerance;
+    const saturationCorrect = Math.abs(imageSettings.saturation - targetSettings.saturation) <= tolerance;
+    const blurCorrect = Math.abs(imageSettings.blur - targetSettings.blur) <= tolerance;
+
+    setCorrectSettings({
+      brightness: brightnessCorrect,
+      contrast: contrastCorrect,
+      saturation: saturationCorrect,
+      blur: blurCorrect,
+    });
     
+    const isEnhanced = brightnessCorrect && contrastCorrect && saturationCorrect && blurCorrect;
     setImageEnhanced(isEnhanced);
     return isEnhanced;
   }, [imageSettings, targetSettings]);
@@ -274,7 +291,10 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Brightness: {imageSettings.brightness}</Label>
+              <Label className="text-sm font-medium flex items-center">
+                Brightness: {imageSettings.brightness}
+                {correctSettings.brightness && <CheckCircle className="ml-2 h-4 w-4 text-green-500" />}
+              </Label>
               <Slider
                 value={[imageSettings.brightness]}
                 onValueChange={(value) => setImageSettings(prev => ({ ...prev, brightness: value[0] }))}
@@ -286,7 +306,10 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
             </div>
             
             <div>
-              <Label className="text-sm font-medium">Contrast: {imageSettings.contrast}%</Label>
+              <Label className="text-sm font-medium flex items-center">
+                Contrast: {imageSettings.contrast}%
+                {correctSettings.contrast && <CheckCircle className="ml-2 h-4 w-4 text-green-500" />}
+              </Label>
               <Slider
                 value={[imageSettings.contrast]}
                 onValueChange={(value) => setImageSettings(prev => ({ ...prev, contrast: value[0] }))}
@@ -298,7 +321,10 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
             </div>
             
             <div>
-              <Label className="text-sm font-medium">Saturation: {imageSettings.saturation}%</Label>
+              <Label className="text-sm font-medium flex items-center">
+                Saturation: {imageSettings.saturation}%
+                {correctSettings.saturation && <CheckCircle className="ml-2 h-4 w-4 text-green-500" />}
+              </Label>
               <Slider
                 value={[imageSettings.saturation]}
                 onValueChange={(value) => setImageSettings(prev => ({ ...prev, saturation: value[0] }))}
@@ -310,7 +336,10 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
             </div>
             
             <div>
-              <Label className="text-sm font-medium">Blur Reduction: {10 - imageSettings.blur}</Label>
+              <Label className="text-sm font-medium flex items-center">
+                Blur Reduction: {10 - imageSettings.blur}
+                {correctSettings.blur && <CheckCircle className="ml-2 h-4 w-4 text-green-500" />}
+              </Label>
               <Slider
                 value={[imageSettings.blur]}
                 onValueChange={(value) => setImageSettings(prev => ({ ...prev, blur: value[0] }))}
@@ -536,7 +565,7 @@ const CCTVImageAnalysis: React.FC<CCTVImageAnalysisProps> = ({
             (step.id === 'ownership-correlation' && !ownershipAnswer)
           }
         >
-          Submit Answer
+          Enhance Image
         </Button>
       </div>
     </div>
